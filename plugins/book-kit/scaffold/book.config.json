@@ -1,0 +1,25 @@
+{
+  "book": {
+    "title": "ตั้งชื่อหนังสือที่นี่",
+    "subtitle": "",
+    "author": "",
+    "language": "th"
+  },
+  "content": {
+    "audience": "ผู้เรียนที่ต้องการเข้าใจเนื้อหาจริง ไม่ใช่ท่องจำ",
+    "english_terms_on_first_use": true,
+    "supplement_policy": "only when a gap genuinely blocks understanding",
+    "figures": "inline SVG, only when necessary for understanding"
+  },
+  "ui": {
+    "accent": "#4f46e5",
+    "accent2": "#0891b2",
+    "features": {
+      "math_katex_cdn": false,
+      "mermaid_cdn": false
+    }
+  },
+  "audit": {
+    "max_source_spot_checks": 10
+  }
+}

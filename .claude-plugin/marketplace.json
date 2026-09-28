@@ -1,0 +1,14 @@
+{
+  "name": "html-book-kit",
+  "description": "Marketplace for the Claude HTML Book Kit plugin (book-kit).",
+  "owner": { "name": "JJ" },
+  "plugins": [
+    {
+      "name": "book-kit",
+      "source": "./plugins/book-kit",
+      "description": "Turns course sources (PDF/PPTX/DOCX/Markdown) into an accurate, readable Thai HTML book with a 5-agent pipeline, SHA-256 incremental updates, and a report -> ask -> stop audit gate.",
+      "category": "education",
+      "tags": ["thai", "html-book", "lecture", "summarize", "multi-agent"]
+    }
+  ]
+}

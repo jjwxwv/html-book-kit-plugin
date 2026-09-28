@@ -1,0 +1,18 @@
+---
+name: update-book
+description: Incremental update — detect added/changed/removed sources, rebuild only what is affected, validate, audit the changed scope, then stop at the approval gate.
+disable-model-invocation: true
+allowed-tools: Bash(python3 *) Bash(python *) Skill(book-kit:rules)
+---
+
+Incrementally update the book after source edits or new chapters. Touch only what changed. First load the kit rules: invoke the `book-kit:rules` skill now unless its content is already in this conversation, and follow it strictly. Run every script from the project root as `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/<name>.py" ...`.
+
+0. **Diff.** If `book.config.json` is missing here, tell the user to run `/book-kit:init` and stop. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/scan_sources.py" --status`. "Nothing changed" means added, changed, removed AND renamed are all 0 — a rename alone is a change (it needs the step-1 remap and the step-6 manifest commit; the steps between naturally no-op). If nothing changed and `book/index.html` exists, say the book is up to date (offer `/book-kit:audit-book`) and stop. If the book was never built, tell the user to run `/book-kit:build-book` and stop.
+1. **Classify impact.** Renamed (same SHA): update the `source:` path inside the existing extraction file — `covers` refs point at the extraction path and need no change; zero re-reads. **Exception:** if the rename moves the file to a different chapter folder or changes its numeric prefix (the hierarchy signal changed), treat both the old and new chapters as affected and hand the move to the architect in step 3 — still no re-read. Removed: note for the architect, then run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/prune_state.py"` — it deletes their stale extraction files and stale office-cache entries (agents cannot delete files; run it after the rename remapping above — the script also sha-protects pending renames). Plan/coverage cleanup of removed sources stays with the architect in step 3. Added/changed: list them. Map changed/removed sources → affected sections via plan `covers`; affected top-level chapters = those sections' chapters plus any chapter the architect later restructures.
+2. **Extract.** Pre-extract changed/added `.pptx`/`.docx` via `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/extract_office.py" "<path>"`, then delegate `book-kit:source-analyst` for added/changed sources only, grouped by chapter.
+3. **Re-plan (delta).** Delegate `book-kit:book-architect` in delta mode with: the diff, new/updated extraction paths, and the current plan. It must preserve stable ids of surviving sections, add ids for new concepts, list `removed`, and update `coverage.json` (entries of removed sources are deleted; new units mapped).
+4. **Rewrite.** Delegate `book-kit:chapter-writer` per affected top-level chapter — delta mode with the exact section ids to add/update/remove. Unaffected chapters are not touched.
+5. **Rebuild.** Delegate `book-kit:book-builder` in delta mode: affected pages + `book-data.js` + TOC on all pages + prev/next on neighbors of added/removed chapters. It runs `validate_book.py` and repairs mechanical failures once; if still failing, print and stop.
+6. **Commit manifest.** `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/scan_sources.py" --commit`.
+7. **Audit.** Delegate `book-kit:book-auditor`, mode `scope`, listing the affected chapters (it adds its light cross-book consistency pass itself).
+8. **Gate — REPORT → ASK → STOP.** Same behavior as `/book-kit:build-book` step 7: summary, findings list, report path, one approval question, then END YOUR TURN. Never fix without explicit approval.

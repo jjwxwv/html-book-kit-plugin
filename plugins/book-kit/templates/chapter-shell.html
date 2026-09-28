@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}" data-chapter="{{CHAPTER_ID}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PAGE_TITLE}} — {{BOOK_TITLE}}</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+/* prevent theme flash: resolve stored/auto theme before first paint */
+(function(){try{var raw=localStorage.getItem("hbk:{{BOOK_SLUG}}:theme");
+var mode=raw?JSON.parse(raw):"auto";
+if(mode==="auto"){mode=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}
+document.documentElement.setAttribute("data-theme",mode);}catch(e){}})();
+</script>
+{{HEAD_EXTRA}}
+</head>
+<body>
+<header class="topbar">
+  <button id="toc-open" aria-label="เปิดสารบัญ">☰</button>
+  <a class="book-title" href="index.html">{{BOOK_TITLE}}</a>
+  <button id="theme-toggle" aria-label="สลับธีมสว่าง/มืด"></button>
+</header>
+<div id="progress" role="progressbar" aria-label="ความคืบหน้าการอ่านหน้านี้" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+<div class="layout">
+{{TOC_HTML}}
+<main class="content">
+  <article class="content-inner">
+    <h1{{H1_ATTR}}>{{PAGE_TITLE}}</h1>
+{{CONTENT_HTML}}
+    <nav class="pagenav" aria-label="ไปบทก่อนหน้า/ถัดไป">
+      {{PREV_LINK}}
+      {{NEXT_LINK}}
+    </nav>
+  </article>
+</main>
+</div>
+
+<script src="assets/book-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

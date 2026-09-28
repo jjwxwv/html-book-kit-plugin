@@ -1,0 +1,9 @@
+{
+  "name": "book-kit",
+  "displayName": "Claude HTML Book Kit",
+  "version": "10.0.0",
+  "description": "Turns course sources (PDF/PPTX/DOCX/Markdown) into an accurate, readable Thai HTML book with a 5-agent pipeline, SHA-256 incremental updates, and a report -> ask -> stop audit gate.",
+  "author": { "name": "JJ" },
+  "license": "MIT",
+  "keywords": ["thai", "html-book", "lecture", "summarize", "pdf", "pptx", "docx", "multi-agent", "education"]
+}

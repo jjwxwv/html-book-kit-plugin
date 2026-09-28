@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}" data-chapter="index">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{BOOK_TITLE}}</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+(function(){try{var raw=localStorage.getItem("hbk:{{BOOK_SLUG}}:theme");
+var mode=raw?JSON.parse(raw):"auto";
+if(mode==="auto"){mode=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}
+document.documentElement.setAttribute("data-theme",mode);}catch(e){}})();
+</script>
+{{HEAD_EXTRA}}
+</head>
+<body>
+<header class="topbar">
+  <button id="toc-open" aria-label="เปิดสารบัญ">☰</button>
+  <a class="book-title" href="index.html">{{BOOK_TITLE}}</a>
+  <button id="theme-toggle" aria-label="สลับธีมสว่าง/มืด"></button>
+</header>
+<div id="progress" role="progressbar" aria-label="ความคืบหน้าการอ่านหน้านี้" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+<div class="layout">
+{{TOC_HTML}}
+<main class="content">
+  <article class="content-inner">
+    <div class="cover">
+      <h1>{{BOOK_TITLE}}</h1>
+      <p class="subtitle">{{BOOK_SUBTITLE}}</p>
+      <p class="author">{{BOOK_AUTHOR}}</p>
+      <a class="start" href="{{FIRST_CHAPTER_HREF}}">เริ่มอ่าน →</a>
+    </div>
+    <section class="agenda">
+      <h2>ภาพรวมเนื้อหา</h2>
+{{AGENDA_HTML}}
+    </section>
+  </article>
+</main>
+</div>
+
+<script src="assets/book-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
