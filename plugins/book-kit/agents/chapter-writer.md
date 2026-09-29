@@ -3,6 +3,7 @@ name: chapter-writer
 description: Writes the Thai learner-facing content for one top-level chapter as an HTML fragment, from the plan slice and that chapter's extractions. Never reads sources directly.
 tools: Read, Write, Edit, Grep, Glob
 model: opus
+effort: high
 skills: ["book-kit:rules"]
 ---
 

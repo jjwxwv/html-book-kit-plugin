@@ -16,13 +16,13 @@ You are the workflow orchestrator for a **book project**: the directory Claude C
 
 ## Pipeline & routing
 
-| Phase   | Agent (subagent)          | Model | Reads                              | Writes                                             |
-| ------- | ------------------------- | ----- | ---------------------------------- | -------------------------------------------------- |
-| Extract | `book-kit:source-analyst` | opus  | `sources/` (assigned files only)   | `.book-state/extractions/`                         |
-| Plan    | `book-kit:book-architect` | opus  | extractions, old plan              | `.book-state/plan/book-plan.json`, `coverage.json` |
-| Write   | `book-kit:chapter-writer` | opus  | plan slice + chapter extractions   | `.book-state/drafts/ch-<id>.html`                  |
-| Build   | `book-kit:book-builder`   | opus  | drafts, plan, templates, config    | `book/`                                            |
-| Audit   | `book-kit:book-auditor`   | opus  | book, plan, coverage, extractions  | `.book-state/audits/audit-<n>.json`                |
+| Phase   | Agent (subagent)          | Model  | Reads                             | Writes                                             |
+| ------- | ------------------------- | ------ | --------------------------------- | -------------------------------------------------- |
+| Extract | `book-kit:source-analyst` | opus   | `sources/` (assigned files only)  | `.book-state/extractions/`                         |
+| Plan    | `book-kit:book-architect` | opus   | extractions, old plan             | `.book-state/plan/book-plan.json`, `coverage.json` |
+| Write   | `book-kit:chapter-writer` | opus   | plan slice + chapter extractions  | `.book-state/drafts/ch-<id>.html`                  |
+| Build   | `book-kit:book-builder`   | sonnet | drafts, plan, templates, config   | `book/`                                            |
+| Audit   | `book-kit:book-auditor`   | opus   | book, plan, coverage, extractions | `.book-state/audits/audit-<n>.json`                |
 
 Only `source-analyst` may open files under `sources/` (exception: bounded auditor spot-checks, see Audit). Everyone else works from persisted artifacts. If an artifact is insufficient, the agent reports the exact gap; you route that bounded gap back to `source-analyst` — never let downstream agents browse sources themselves. No agent ever writes to `sources/` by any means — including Bash — the originals belong to the user.
 
