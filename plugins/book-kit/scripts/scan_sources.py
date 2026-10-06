@@ -8,6 +8,7 @@ Usage (project = current directory, or --root <dir>):
 Prints one JSON object the orchestrator routes from, so it never has to read state files itself:
   summary / diff   sources added, changed, removed, renamed (same SHA-256, new path) since the last commit
   unsupported      files under sources/ the kit cannot read (not part of the book)
+  unnumbered       sources outside a numbered chapter folder (the architect places them by content)
   office.refresh   .pptx/.docx that need extract_office.py --all first
   state            what sync_state.py --sources will do: path remaps, stale state to delete, renumbering
   extract          sources without a current extraction — the ONLY files an analyst has to read
@@ -91,6 +92,13 @@ def main():
         out["note"] = "no source files found under sources/ — see sources/README.md for the expected layout"
     if unsupported:
         out["unsupported"] = unsupported
+    unnumbered = [rel for rel in sorted(sources) if not kitlib.source_chapter(rel)]
+    if unnumbered:
+        out["unnumbered"] = {"files": unnumbered,
+                             "tell_user": "these sources are not in a numbered chapter folder (ch2 …, 2 …) and carry no "
+                                          "chapter number of their own: the kit cannot tell which chapter they belong "
+                                          "to — the architect places them by content. Move each into its chapter "
+                                          "folder (see sources/README.md) to decide it yourself"}
     if args.commit:
         os.makedirs(os.path.dirname(manifest), exist_ok=True)
         with open(manifest, "w", encoding="utf-8") as f:

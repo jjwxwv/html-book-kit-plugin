@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression suite for book-kit v11.5 (no test framework needed).
+"""Regression suite for book-kit v11.6 (no test framework needed).
 
   python3 tests/run_tests.py            # script battery (standard library only)
   python3 tests/run_tests.py --browser  # + real-browser tests of the built book (needs Playwright + Chromium)
@@ -172,7 +172,7 @@ def t_build_level2():
     s = scan(root)
     check("scan: diff + config + level blocks", s["summary"]["added"] == 6 and s["config"]["level"] == 2
           and s["config"]["level_name"] == "study" and s["level"]["write_full"] == []
-          and s["level"]["write_delta"] == {} and s["kit"].startswith("11.5"), s)
+          and s["level"]["write_delta"] == {} and s["kit"].startswith("11.6"), s)
     check("scan: nothing has to be read when every source has a current extraction (resume without re-reading)",
           s["extract"] == [] and "state" not in s and "stamp" not in s, s.get("extract"))
     rc, b = build(root)
@@ -2171,6 +2171,190 @@ def t_static_contract():
           and f"## v{kit} " in read(os.path.join(PLUGIN, "CHANGELOG.md")), (manifest["version"], kit))
 
 
+def t_v116():
+    """v11.6 — findings of the audit of v11.5.0 (F1–F4, F6): each reproduction case is a test."""
+    def drop_chapter(root, cid):
+        plan = load_plan(root)
+        gone = [s["id"] for ch in plan["chapters"] if ch["id"] == cid for s in ch["sections"]]
+        plan["chapters"] = [ch for ch in plan["chapters"] if ch["id"] != cid]
+        plan["removed"] = gone
+        save_plan(root, plan)
+
+    def new_extraction(root, rel, src, chapter, units):
+        lines = ["---", f"source: {src}", f'chapter: "{chapter}"', "---", "", "# Overview", "", "New.", "", "# Units", ""]
+        for n, title in enumerate(units, 1):
+            lines += [f"## U{n} [l.{n + 2}] (important) {title}", f"- teaches: {title}", "- visual: none", ""]
+        write(extraction(root, rel), "\n".join(lines + ["# Key verbatim", "", "none", ""]))
+
+    # ---- F1: a chapter number that is used again never inherits its predecessor's draft
+    root = project("v116-f1")
+    build(root)
+    run("scan_sources.py", "--commit", root=root)
+    old_text = read(draft(root, "4"))
+    shutil.rmtree(os.path.join(root, "sources", "ch4"))
+    sync(root, "--sources")
+    drop_chapter(root, "4")
+    rc, y = sync(root, "--plan")
+    retired = os.path.join(root, ".book-state", "drafts", "removed", "L2", "ch-4.html")
+    check("F1: the draft of a chapter that left the plan is moved out of the store (kept under drafts/removed/)",
+          y.get("status") == "OK" and not os.path.exists(draft(root, "4")) and os.path.isfile(retired)
+          and read(retired) == old_text and y.get("drafts_retired") == ["L2/ch-4.html -> removed/L2/ch-4.html"], y)
+    build(root)
+    rc, v = validate(root)
+    check("F1: the book without the chapter validates", rc == 0 and not os.path.exists(page(root, "ch-4.html")), v.get("problems"))
+    # the pre-v11.6 state: the predecessor's draft is still lying in the store
+    shutil.copyfile(retired, draft(root, "4"))
+    write(os.path.join(root, "sources", "ch4", "4 regression.md"), "# regression\n\n- line\n- residual\n")
+    new_extraction(root, "ch4/4-regression.md", "sources/ch4/4 regression.md", "4", ["regression", "residual"])
+    sync(root, "--stamp")
+    plan = load_plan(root)
+    plan.pop("removed", None)
+    plan["chapters"].append({"id": "4", "title_th": "การถดถอย", "page": "ch-4.html", "sections": [
+        {"id": "4.1", "title_th": "พื้นฐาน", "priority": "important", "covers": ["ext:ch4/4-regression.md#U1"]},
+        {"id": "4.2", "title_th": "ส่วนเหลือ", "priority": "important", "covers": ["ext:ch4/4-regression.md#U2"]}]})
+    save_plan(root, plan)
+    s = scan(root)
+    rc, y = sync(root, "--plan")
+    check("F1: a draft nothing is on record for is not current — the new chapter 4 is listed in mode full",
+          y.get("write", {}).get("4", {}).get("mode") == "full" and "not written for this chapter" in y["write"]["4"].get("reason", "")
+          and "4" not in y.get("current", []) and "4" in s["level"]["write_full"], (y.get("write"), y.get("current"), s["level"]))
+    build(root)
+    rc, v = validate(root)
+    check("F1: … and until it is written, validation blocks (draft.stale) instead of passing on the old text",
+          rc == 1 and "draft.stale" in codes(v) and any("nothing is on record" in p["detail"] for p in v["problems"]), v.get("problems"))
+    rc, y = sync(root, "--plan")
+    check("F1: … and the next plan step lists it again (the briefing alone does not make it current)",
+          y.get("write", {}).get("4", {}).get("mode") == "full", y.get("write"))
+    write(draft(root, "4"), '<!-- book-kit:draft chapter="4" level="2" rev="1" -->\n<p class="lead">การถดถอยอธิบายความสัมพันธ์ของสองตัวแปร</p>\n'
+          '<h2 id="sec-4-1">4.1 พื้นฐาน</h2>\n<p>เส้นถดถอย (regression) คือเส้นตรงที่อธิบายข้อมูลได้ดีที่สุด ใช้ทำนายค่าของตัวแปรหนึ่งจากอีกตัวแปรหนึ่ง</p>\n'
+          '<h2 id="sec-4-2">4.2 ส่วนเหลือ</h2>\n<p>ส่วนเหลือ (residual) คือผลต่างระหว่างค่าจริงกับค่าที่เส้นถดถอยทำนาย ยิ่งเล็กเส้นยิ่งอธิบายข้อมูลได้ดี</p>\n'
+          '<div class="callout summary"><ul><li>เส้นถดถอยสรุปความสัมพันธ์</li><li>ส่วนเหลือวัดความคลาดเคลื่อน</li><li>ใช้ทำนายค่า</li></ul></div>\n')
+    build(root)
+    rc, v = validate(root)
+    rc2, y = sync(root, "--plan")
+    check("F1: once written from the briefing the chapter validates and is current", rc == 0 and y.get("write") == {}
+          and "4" in y.get("current", []), (v.get("problems"), y.get("write")))
+    fresh = project("v116-f1-legacy")
+    os.remove(os.path.join(fresh, ".book-state", "drafts", "L2", "inputs.json")) if os.path.exists(
+        os.path.join(fresh, ".book-state", "drafts", "L2", "inputs.json")) else None
+    rc, y = sync(fresh, "--plan")
+    check("F1: drafts from before the ledger (no inputs.json yet) are still adopted, not rewritten",
+          y.get("write") == {} and len(y.get("current", [])) == 4, y.get("write"))
+
+    # ---- F2: a renumbering puts chapters and sections where their new number belongs
+    root = project("v116-f2")
+    build(root)
+    run("scan_sources.py", "--commit", root=root)
+    src = os.path.join(root, "sources")
+    os.rename(os.path.join(src, "ch3"), os.path.join(src, "chX"))
+    os.rename(os.path.join(src, "ch4"), os.path.join(src, "ch3"))
+    os.rename(os.path.join(src, "chX"), os.path.join(src, "ch4"))
+    os.rename(os.path.join(src, "ch3", "4 normal.md"), os.path.join(src, "ch3", "3 normal.md"))
+    os.rename(os.path.join(src, "ch4", "3 probability.md"), os.path.join(src, "ch4", "4 probability.md"))
+    rc, y = sync(root, "--sources")
+    plan = load_plan(root)
+    check("F2: swapping two source chapters renumbers the book and keeps its chapters in number order",
+          y.get("renumbered") == [{"3": "4", "4": "3"}] and [ch["id"] for ch in plan["chapters"]] == ["1", "2", "3", "4"]
+          and plan["chapters"][2]["title_th"] == "การแจกแจงปกติ", [ch["id"] for ch in plan["chapters"]])
+    rc, y = sync(root, "--plan")
+    rcb, b = build(root)
+    rc, v = validate(root)
+    check("F2: … nothing is rewritten, the pages follow in number order and the book validates",
+          y.get("write") == {} and b.get("pages") == ["index.html", "ch-1.html", "ch-2.html", "ch-3.html", "ch-4.html"]
+          and rc == 0 and v["warningCount"] == 0, (b.get("pages"), v.get("problems"), v.get("warnings")))
+    plan = load_plan(root)
+    plan["chapters"] = [plan["chapters"][i] for i in (0, 1, 3, 2)]
+    save_plan(root, plan)
+    rc, v = validate(root)
+    check("F2: chapters out of number order in the plan are put before the auditor (plan.order)",
+          "plan.order" in codes(v, "warnings") and any("chapter 3 comes after chapter 4" in w["detail"] for w in v["warnings"]), v.get("warnings"))
+    rc, y = sync(root, "--plan")
+    check("F2: … and the plan step sorts them (chapter numbers follow the source folders)",
+          y.get("chapters_sorted") == ["1", "2", "3", "4"] and [ch["id"] for ch in load_plan(root)["chapters"]] == ["1", "2", "3", "4"], y.get("chapters_sorted"))
+    root = project("v116-f2-sections")
+    build(root)
+    plan = load_plan(root)
+    section(plan, "3.3")["covers"] = ["ext:ch3/3-probability.md#U9-U11"]
+    plan["chapters"][2]["sections"].append({"id": "3.4", "title_th": "หัวข้อใหม่", "priority": "important",
+                                            "covers": ["ext:ch3/3-probability.md#U12"]})
+    plan["renumber_request"] = ["3.4=3.2", "3.2=3.3", "3.3=3.4"]
+    save_plan(root, plan)
+    rc, y = sync(root, "--plan")
+    plan = load_plan(root)
+    ids = [s["id"] for s in plan["chapters"][2]["sections"]]
+    check("F2: a section the architect asks to have between two others moves there (the new 3.2 follows 3.1)",
+          ids == ["3.1", "3.2", "3.3", "3.4"] and plan["chapters"][2]["sections"][1]["title_th"] == "หัวข้อใหม่"
+          and "plan.order" not in codes(y, "warnings"), (ids, y.get("warnings")))
+    w = y.get("write", {}).get("3", {})
+    check("F2: … the writer adds the new section and rewrites the one that lost a unit; the others keep their text",
+          w.get("mode") == "delta" and w.get("added") == ["3.2"] and w.get("changed") == ["3.4"] and not w.get("reordered")
+          and '<h2 id="sec-3-3">3.3 กฎการบวกและกฎการคูณ' in read(draft(root, "3")), w)
+
+    # ---- F6: delete a middle chapter and shift the later ones, in one step
+    root = project("v116-f6")
+    build(root)
+    run("scan_sources.py", "--commit", root=root)
+    src = os.path.join(root, "sources")
+    shutil.rmtree(os.path.join(src, "ch2"))
+    os.rename(os.path.join(src, "ch3"), os.path.join(src, "ch2"))
+    os.rename(os.path.join(src, "ch2", "3 probability.md"), os.path.join(src, "ch2", "2 probability.md"))
+    os.rename(os.path.join(src, "ch4"), os.path.join(src, "ch3"))
+    os.rename(os.path.join(src, "ch3", "4 normal.md"), os.path.join(src, "ch3", "3 normal.md"))
+    prob_text, central_text = read(draft(root, "3")), read(draft(root, "2"))
+    rc, y = sync(root, "--sources")
+    check("F6: the renumbering cannot happen while chapter 2 is in the plan — said, with what happens next",
+          "chapter 2 already exists" in y.get("renumber_skipped", "") and "renumbers by itself" in y["renumber_skipped"], y.get("renumber_skipped"))
+    rc, y = sync(root, "--plan")
+    drift = [w["detail"] for w in y.get("warnings", []) if w["code"] == "plan.chapter_drift"]
+    check("F6: until then the plan step says which chapter has to leave the plan (plan.chapter_drift)",
+          rc == 1 and "plan.covers_ref" in codes(y) and len(drift) == 1 and "3 -> 2, 4 -> 3" in drift[0]
+          and "removes chapter 2" in drift[0], y.get("warnings"))
+    drop_chapter(root, "2")                                      # the architect's answer
+    rc, y = sync(root, "--plan")
+    plan = load_plan(root)
+    check("F6: once the chapter has left the plan the book follows the source folders by itself",
+          y.get("status") == "OK" and y.get("renumbered_from_sources") == {"3": "2", "4": "3"}
+          and [ch["id"] for ch in plan["chapters"]] == ["1", "2", "3"] and y.get("write") == {}
+          and [s["id"] for s in plan["chapters"][1]["sections"]] == ["2.1", "2.2", "2.3"], (y.get("problems"), y.get("write")))
+    moved = read(draft(root, "2"))
+    check("F6: … the drafts moved with their chapters; the removed chapter's draft is kept aside, not overwritten",
+          '<h2 id="sec-2-1">2.1 ' in moved and moved.split("\n", 2)[1] == prob_text.split("\n", 2)[1]
+          and read(os.path.join(root, ".book-state", "drafts", "removed", "L2", "ch-2.html")) == central_text
+          and y.get("drafts_retired") == ["L2/ch-2.html -> removed/L2/ch-2.html"], (moved[:160], y.get("drafts_retired")))
+    check("F6: … and no draft is left for a chapter that is not in the plan", not os.path.exists(draft(root, "4")), os.listdir(os.path.dirname(draft(root, "4"))))
+    build(root)
+    rc, v = validate(root)
+    fm = read(extraction(root, "ch3/3-probability.md"))
+    check("F6: the book validates as chapters 1–3 and the extractions name their new chapter",
+          rc == 0 and v["warningCount"] == 0 and 'chapter: "2"' in fm and sorted(n for n in os.listdir(os.path.join(root, "book")) if n.endswith(".html")) ==
+          ["ch-1.html", "ch-2.html", "ch-3.html", "index.html"], (rc, v.get("warnings"), sorted(os.listdir(os.path.join(root, "book")))))
+    s = scan(root)
+    check("F6: … and the next scan has nothing left to do", "state" not in s and s["extract"] == [] and s["level"]["current"] == ["1", "2", "3"], s.get("state"))
+
+    # ---- F4: a source outside a numbered chapter folder is named
+    root = project("v116-f4")
+    write(os.path.join(root, "sources", "misc", "notes.md"), "# notes\n\n- one\n")
+    s = scan(root)
+    check("F4: the scan names sources that carry no chapter number", s.get("unnumbered", {}).get("files") == ["sources/misc/notes.md"]
+          and "architect" in s["unnumbered"]["tell_user"], s.get("unnumbered"))
+    check("F4: a normal project has no such entry", "unnumbered" not in scan(project("v116-f4-clean")))
+
+    # ---- F3 + models: prompts
+    bb = read(os.path.join(PLUGIN, "skills", "build-book", "SKILL.md"))
+    check("F3: --rewrite writes from the same plan; planning again is its own flag (--replan)",
+          "do not contain `--replan`" in bb and "do not contain `--rewrite`" not in bb and "[--rewrite] [--replan]" in bb)
+    want = {"source-analyst": ("opus", "high"), "book-architect": ("opus", "xhigh"), "chapter-writer": ("opus", "high"),
+            "book-builder": ("sonnet", "high"), "book-auditor": ("opus", "xhigh")}
+    got = {}
+    for name in want:
+        fm = read(os.path.join(PLUGIN, "agents", f"{name}.md")).split("---")[1]
+        got[name] = (re.search(r"^model: (\S+)$", fm, re.M).group(1), (re.search(r"^effort: (\S+)$", fm, re.M) or [None, None])[1])
+    check("agents: model and effort of every agent are the configured ones", got == want, got)
+    readme = read(os.path.join(PLUGIN, "README.md")) + read(os.path.join(PLUGIN, "README_TH.md"))
+    check("agents: the READMEs state the same defaults", "analyst `opus`/high, architect `opus`/xhigh, writer `opus`/high, builder `sonnet`/high, auditor `opus`/xhigh" in readme
+          and "analyst = opus / high, architect = opus / xhigh, writer = opus / high, builder = sonnet / high, auditor = opus / xhigh" in readme)
+
+
 # ----------------------------------------------------------------------------- browser
 def t_browser(root, renumbered):
     try:
@@ -2348,6 +2532,7 @@ def main():
     t_v113()
     t_v114()
     t_v115()
+    t_v116()
     t_static_contract()
     if "--browser" in sys.argv:
         fresh = project("browser")

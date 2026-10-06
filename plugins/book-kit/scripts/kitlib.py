@@ -15,7 +15,7 @@ import sys
 import unicodedata
 import zlib
 
-KIT_VERSION = "11.5.0"
+KIT_VERSION = "11.6.0"
 TEMPLATE_CONTRACT = "11"
 # Version of the .pptx/.docx pre-extractor. 2 = equations, SmartArt text, shapes wrapped in
 # mc:AlternateContent, text boxes, chart data and line breaks are kept (v11.0 dropped them).
@@ -1112,6 +1112,46 @@ def load_ledger(root, level):
         return {}
 
 
+def ledger_exists(root, level):
+    """True once this level's ledger file has been written. From then on every draft the kit knows
+    has an entry or a briefing — a draft with neither was not written for the chapter it is named
+    after (see UNRECORDED_REASON) and is never taken as current. Without a ledger file (drafts from
+    before the ledger) a draft is still adopted as written from the current inputs."""
+    try:
+        with open(ledger_path(root, level), "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return isinstance(data, dict) and isinstance(data.get("chapters"), dict)
+    except (OSError, ValueError):
+        return False
+
+
+UNRECORDED_REASON = ("nothing is on record for this draft: it was not written for this chapter (a file left by "
+                     "an earlier chapter with the same number, or placed by hand) — write the whole chapter "
+                     "from its slice and extractions")
+
+
+def retire_drafts(root, plan):
+    """Move the drafts of chapters that are no longer in the plan out of every level's store, to
+    .book-state/drafts/removed/L<level>/ (kept, never read by the kit). A chapter number that is
+    used again later then starts without a draft. Returns the moves made. Call only for a plan
+    that passed its checks."""
+    ids = {ch["id"] for ch in plan["chapters"]}
+    moved = []
+    for level in LEVELS:
+        ddir = drafts_dir(root, level)
+        if not os.path.isdir(ddir):
+            continue
+        for name in sorted(os.listdir(ddir)):
+            mo = re.fullmatch(r"ch-(\d+)\.html", name)
+            if not mo or mo.group(1) in ids or not os.path.isfile(os.path.join(ddir, name)):
+                continue
+            dst_dir = os.path.join(drafts_root(root), "removed", f"L{level}")
+            os.makedirs(dst_dir, exist_ok=True)
+            os.replace(os.path.join(ddir, name), os.path.join(dst_dir, name))
+            moved.append(f"L{level}/{name} -> removed/L{level}/{name}")
+    return moved
+
+
 def load_briefed(root, level):
     """{chapter id: {"before", "sections", "order"}} written by sync_state.py --plan: the inputs each
     writer was handed, and the SHA-256 the draft had at that moment (None: no draft yet). A draft
@@ -1362,8 +1402,10 @@ def settle_ledger(root, plan, ext_idx, level):
     """Bring the ledger of one level up to date with the drafts on disk and return
     (ledger, briefed, stale): each existing draft gets an entry that says what it was written
     from (see draft_provenance; a draft nothing is recorded for is taken as written from the
-    current inputs), used briefings are dropped, and stale = {chapter id: what moved} for drafts
-    older than their inputs. Called by build_book.py and sync_state.py — never by a status scan."""
+    current inputs only while this level has no ledger yet — afterwards it is reported as
+    {"unrecorded": True} and gets no entry), used briefings are dropped, and stale =
+    {chapter id: what moved} for drafts older than their inputs. Called by build_book.py and sync_state.py — never by a status scan."""
+    had_ledger = ledger_exists(root, level)
     ledger, briefed = load_ledger(root, level), load_briefed(root, level)
     wcfg = writer_config(root)
     new, stale, ids = {}, {}, set()
@@ -1376,6 +1418,9 @@ def settle_ledger(root, plan, ext_idx, level):
         if not info["exists"] or info["level"] != level:
             continue
         recorded, used = draft_provenance(ledger.get(cid), briefed.get(cid), info["sha"])
+        if recorded is None and had_ledger:
+            stale[cid] = {"unrecorded": True}          # no entry is made: the draft is not this chapter's
+            continue
         if used:
             briefed.pop(cid, None)
         new[cid] = _entry(recorded, info["sha"], ch, ext_idx, wcfg)
@@ -1399,11 +1444,13 @@ def rewrite_pending(brief, sha):
 
 def write_plan(root, plan, ext_idx, level):
     """What the writers have to do at this level, per chapter (read-only):
-    {"mode": "full"} no draft yet, the draft is in another language than book.language, or the user
-    asked for a rewrite that has not happened yet (rewrite_pending) ·
+    {"mode": "full"} no draft yet, the draft is in another language than book.language, the user
+    asked for a rewrite that has not happened yet (rewrite_pending), or nothing is on record for
+    the draft although this level has a ledger (UNRECORDED_REASON) ·
     {"mode": "delta", changed/added/removed/reordered, form} the draft is older than its inputs, or
     contains what the configuration no longer supports (see draft_form_issues) ·
     {"mode": "none"} the draft is current."""
+    had_ledger = ledger_exists(root, level)
     ledger, briefed = load_ledger(root, level), load_briefed(root, level)
     wcfg = writer_config(root)
     out = {}
@@ -1420,6 +1467,9 @@ def write_plan(root, plan, ext_idx, level):
             out[cid] = {"mode": "full", "reason": REWRITE_REASON, "rewrite": True}
             continue
         recorded, _ = draft_provenance(ledger.get(cid), briefed.get(cid), info["sha"])
+        if recorded is None and had_ledger:
+            out[cid] = {"mode": "full", "reason": UNRECORDED_REASON}
+            continue
         diff = inputs_diff(recorded, ch, ext_idx, wcfg["lang"]) if recorded else None
         if diff and diff.get("language"):
             out[cid] = {"mode": "full", "reason": f"book.language changed ({diff['language']}) — write the chapter again in the new language"}
@@ -1673,6 +1723,54 @@ def suggest_renumber(plan, ext_idx, renames, shas):
         if b in plan_ids and b not in mapping:
             return {}, f"chapter {b} already exists and is not moving"
     return mapping, None
+
+
+def chapter_drift(plan, ext_idx, shas):
+    """({old chapter id: new chapter id}, [warnings]) — book chapters whose sources all sit in the
+    folder of another chapter number although no renumbering is on record.
+
+    That is what remains when the user renumbered source chapters and the book could not follow
+    at once (suggest_renumber: the target number was still taken — typically by a chapter whose
+    sources were deleted in the same step). Stateless: read from each extraction's `chapter` and
+    the folder its source is in now, so it is found again on every run until it is resolved. The
+    map holds what can be applied now (no target is a chapter that stays); what cannot is a
+    warning that says what has to leave the plan first."""
+    plan_ids = [ch["id"] for ch in plan["chapters"]]
+    here, alive = {}, set()
+    for e in ext_idx.values():
+        if not e.get("source") or e["source"] not in shas:
+            continue
+        there = source_chapter(e["source"])
+        if e.get("chapter") in plan_ids and there:
+            here.setdefault(e["chapter"], set()).add(there)
+            if there == e["chapter"]:
+                alive.add(there)
+    wants = {a: next(iter(bs)) for a, bs in here.items() if len(bs) == 1 and next(iter(bs)) != a}
+    if not wants:
+        return {}, []
+    targets = list(wants.values())
+    if len(set(targets)) != len(targets):
+        return {}, [{"code": "plan.chapter_drift",
+                     "detail": "the sources of several book chapters now sit under one chapter number ("
+                               + ", ".join(f"{a} -> {b}" for a, b in sorted(wants.items())) + ") — the architect "
+                               "merges or restructures those chapters; nothing is renumbered by script"}]
+    blocked = sorted(b for b in targets if b in plan_ids and b not in wants)
+    if not blocked:
+        return wants, []
+    moves = ", ".join(f"{a} -> {b}" for a, b in sorted(wants.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0))
+    notes = []
+    for b in blocked:
+        if b in alive or b in here:
+            what = (f"chapter {b} is still in the plan and has sources of its own — the architect restructures "
+                    "the affected chapters")
+        else:
+            what = (f"chapter {b} is still in the plan although none of its sources is left — the architect "
+                    f"removes chapter {b} from the plan (its section ids under \"removed\"); the next "
+                    "sync_state.py --plan then renumbers by itself")
+        notes.append({"code": "plan.chapter_drift",
+                      "detail": f"the source folders say the book's chapters should be renumbered ({moves}), "
+                                f"but {what}"})
+    return {}, notes
 
 
 def _slug(text):
@@ -2149,6 +2247,12 @@ def check_plan(plan):
                                  "detail": f"chapter {cid}: section {sid} comes after {parent}.{last[parent]} — "
                                            "numbers are out of reading order (request a renumber, see the architect rules)"})
             last[parent] = max(last.get(parent, 0), int(leaf))
+    numeric = [int(c) for c in pages if re.fullmatch(r"\d+", c)]
+    for a, b in zip(numeric, numeric[1:]):
+        if b < a:
+            warnings.append({"code": "plan.order",
+                             "detail": f"chapter {b} comes after chapter {a} in the plan — chapters are out of "
+                                       "reading order (sync_state.py --plan sorts them by number)"})
     for sid in sections:
         parent = sid.rpartition(".")[0]
         if parent and parent not in sections and parent not in pages:

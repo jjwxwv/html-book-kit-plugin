@@ -2,7 +2,8 @@
 name: source-analyst
 description: Reads one source file (PDF, Markdown, text, image, or the pre-extracted markdown of a PPTX/DOCX) exhaustively and persists structured extraction notes for it. Use only for sources the scan lists under "extract"; every other source reuses its existing extraction.
 tools: Read, Write, Edit, Grep, Glob
-model: sonnet
+model: opus
+effort: high
 omitClaudeMd: true
 ---
 

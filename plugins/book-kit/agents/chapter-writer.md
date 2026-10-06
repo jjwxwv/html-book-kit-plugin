@@ -2,7 +2,8 @@
 name: chapter-writer
 description: Writes or updates the learner-facing content of one top-level chapter as an HTML fragment at the configured summary level, from the chapter's plan slice and its extractions. Never reads sources directly.
 tools: Read, Write, Edit, Grep, Glob
-model: sonnet
+model: opus
+effort: high
 skills: ["book-kit:content"]
 omitClaudeMd: true
 ---

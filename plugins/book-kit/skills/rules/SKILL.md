@@ -4,7 +4,7 @@ description: Orchestration rules of the Claude HTML Book Kit (book-kit) — abso
 user-invocable: false
 ---
 
-# Claude HTML Book Kit v11.5 — orchestration rules
+# Claude HTML Book Kit v11.6 — orchestration rules
 
 You orchestrate a **book project**: the directory Claude Code was started in, holding `sources/`, `book.config.json`, `.book-state/` and `book/`. Goal: turn the lesson sources into an HTML summary book that is complete, accurate, easy to picture, easy to maintain and cheap in tokens. You never write learner content, plans or extractions yourself: agents do the judgment, scripts do everything mechanical, and you route between them from what the scripts print.
 
@@ -21,11 +21,11 @@ Run from the project root as `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/<name>.py" 
 
 | Script | When | What you take from its output |
 |---|---|---|
-| `scan_sources.py --status` | first step of every command | `extract` (the only sources to read; pass each entry as it is — `read` is the file to open instead of the source, an entry of a changed source may carry `keep` / `read_ranges`, and `reason: truncated` is an extraction that stopped before its source did — its analyst reads on from `resume_after`), `unsupported`, `unread_visuals`, `pdf_pages`, `office.refresh`, `state`, `stamp`, `replan` (a re-extraction the plan has not answered yet: the architect is due before the plan check), `level.write_full` / `write_delta` / `style_outdated`, `audit` (the latest report **about the edition of `content.level`**, `prior`, `other_levels`, `hint`, `approval`), `config` |
+| `scan_sources.py --status` | first step of every command | `extract` (the only sources to read; pass each entry as it is — `read` is the file to open instead of the source, an entry of a changed source may carry `keep` / `read_ranges`, and `reason: truncated` is an extraction that stopped before its source did — its analyst reads on from `resume_after`), `unsupported`, `unnumbered`, `unread_visuals`, `pdf_pages`, `office.refresh`, `state`, `stamp`, `replan` (a re-extraction the plan has not answered yet: the architect is due before the plan check), `level.write_full` / `write_delta` / `style_outdated`, `audit` (the latest report **about the edition of `content.level`**, `prior`, `other_levels`, `hint`, `approval`), `config` |
 | `extract_office.py --all` | when the scan shows `office.refresh` | then scan again |
 | `sync_state.py --sources` | when the scan shows `state` | remaps moved sources, renumbers the book if the user renumbered source chapters, deletes state of removed sources |
 | `sync_state.py --stamp` | after the analysts finish | stamps and checks the extractions; `problems` must be empty before planning. For a source that was read again it re-points the plan to the new unit numbers itself and prints `reextracted` (`moved`, `replaced`, `new`, `gone`, `emptied`, `architect` = what is left to decide) — hand it to the architect |
-| `sync_state.py --plan` | after the architect finishes, and **always directly before delegating writers** | checks the plan, generates `coverage.json` and the chapter slices, prints `write` (what to write at `content.level`) and records what each writer is handed — a draft counts as current only for the inputs it was briefed with here. With `--rewrite` every chapter is listed in mode `full`, and stays listed until it has been written again |
+| `sync_state.py --plan` | after the architect finishes, and **always directly before delegating writers** | checks the plan, generates `coverage.json` and the chapter slices, prints `write` (what to write at `content.level`) and records what each writer is handed — a draft counts as current only for the inputs it was briefed with here. With `--rewrite` every chapter is listed in mode `full`, and stays listed until it has been written again. It also keeps chapters in number order, follows renumbered source folders once the number is free (`renumbered_from_sources`) and moves drafts of chapters that left the plan to `drafts/removed/` (`drafts_retired`) |
 | `build_book.py`, then `validate_book.py` | after the writers finish | PASS/FAIL, `problemCodes` |
 | `scan_sources.py --commit` | after validation passes | — |
 | `sync_state.py --merge-audit` | after the auditors finish, and after a recheck | the report path and the findings to print. Open findings of the earlier report about the same level are carried over unless the auditor of their part reported them fixed; reports about another level's edition are left alone |
@@ -55,7 +55,7 @@ Never copy hashes, count units, shift unit numbers in the plan, edit `coverage.j
 - A unit that says what it said before keeps the sections that cover it current, even when its number or position in the source moved. For a changed text, `.docx` or `.pptx` source the scan proves by hash which units are untouched (`keep`); the analyst copies those and reads only the rest (`read`).
 - Settings a writer acts on are checked by script, never by you: a chapter written in another language than `book.language` is listed for a `full` rewrite; TeX or Mermaid in a draft while that feature is off blocks validation (`draft.raw_tex`, `draft.mermaid_off`) and is listed under `write` with `form`; so is a level-1 chapter without recall questions when they are on (switched off, the build hides them at no cost). A changed `content.audience` / `content.style_notes` rewrites nothing: tell the user what `level.style_outdated` says.
 - An interrupted run resumes where it stopped: finished extractions are not read again, finished chapters are not written again, and what a re-extraction left for the architect comes back until the plan answers it: new units and emptied sections block as `coverage.gap` / `plan.section_emptied`, units replaced in place are listed by the scan (`replan`) and by `sync_state.py --plan` (`reextracted`, `plan.replaced_unreviewed`) — give those entries to the architect once; a warning that remains is the auditor's.
-- When the user renumbers source chapters (for example to insert a new chapter 3), `sync_state.py --sources` shifts every id in plan and drafts mechanically. When the architect needs a new section between two old ones it writes `renumber_request`; `sync_state.py --plan` applies it. Report what was renumbered.
+- When the user renumbers source chapters (for example to insert a new chapter 3), `sync_state.py --sources` shifts every id in plan and drafts mechanically. When a number is still taken by a chapter whose sources are gone, nothing is renumbered yet (`renumber_skipped`, warning `plan.chapter_drift`): the architect removes that chapter and the next `sync_state.py --plan` renumbers by itself. When the architect needs a new section between two old ones it writes `renumber_request`; `sync_state.py --plan` applies it and puts every renumbered section in its place. Report what was renumbered.
 
 ## Build, validate, repair
 
@@ -64,8 +64,7 @@ On FAIL repair **once**, routed by problem code, then build + validate again; if
 | Problem code | Route to |
 |---|---|
 | `plan.*`, `coverage.*` | `book-kit:book-architect`, then `sync_state.py --plan` |
-| `draft.stale` | run `sync_state.py --plan`, then `book-kit:chapter-writer` for the chapters its `write` lists |
-| `draft.missing`, `draft.level` | run `sync_state.py --plan`, then `book-kit:chapter-writer` for the chapters its `write` lists |
+| `draft.stale`, `draft.missing`, `draft.level` | run `sync_state.py --plan`, then `book-kit:chapter-writer` for the chapters its `write` lists |
 | `book.anchor`, other `draft.*` (a bare heading is `draft.section_empty`; `draft.raw_tex`, `draft.mermaid_off`; a script, style or navigation element is `draft.foreign_markup`), `supplement.*`, `link.*` | `book-kit:chapter-writer` for the affected chapter **as a repair**: its slice plus the problem texts — it edits only what they name, never the whole chapter |
 | `extraction.missing`, `.frontmatter`, `.incomplete`, `.outdated`, `.unit_numbering`, `.truncated`, `.duplicate` | `book-kit:source-analyst` for that source, then `sync_state.py --stamp` |
 | `extraction.unstamped` | run `sync_state.py --stamp` |

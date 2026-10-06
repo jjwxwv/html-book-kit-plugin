@@ -1,7 +1,7 @@
 {
   "name": "book-kit",
   "displayName": "Claude HTML Book Kit",
-  "version": "11.5.0",
+  "version": "11.6.0",
   "description": "Turns lesson sources (PDF/PPTX/DOCX/Markdown) into an accurate, easy-to-picture HTML summary book: configurable summary levels (exam review / study) kept side by side, a 5-agent pipeline gated by deterministic scripts (zero-token build, SHA-256 freshness checks from source to page, coverage derived from the plan), AA-checked colour palettes, and a report -> ask -> stop audit gate.",
   "author": {
     "name": "JJ"

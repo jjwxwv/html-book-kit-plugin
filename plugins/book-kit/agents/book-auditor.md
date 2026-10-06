@@ -3,6 +3,7 @@ name: book-auditor
 description: Audits the book for accuracy, coverage, fidelity to the configured summary level, clarity and picturability, consistency and UI. Report-only — writes one JSON part file and never edits the book. Modes chapter (one chapter in depth), cross (cross-book consistency) and recheck.
 tools: Read, Grep, Glob, Write, Edit
 model: opus
+effort: xhigh
 skills: ["book-kit:content"]
 omitClaudeMd: true
 ---
@@ -33,7 +34,7 @@ Evidence: the chapter's **draft** (`.book-state/drafts/L<level>/ch-<id>.html` �
 
 ### `cross` — the book as a whole → `.book-state/audits/audit-<n>.part-cross.json`
 
-Read `book-plan.json` and `validate-report.json` only; open a draft only to confirm a lead. Check: prerequisites before dependents in chapter and section order; concepts taught twice in different chapters (unmerged duplicates); judge every `terms.inconsistent`, `plan.order`, `plan.replaced_unreviewed` (read the unit: does it still belong in the section it sits in? if not: `coverage`, `major`), `sources.unsupported`, `ui.contrast`, `toc.*`, `config.*`, `book.legacy_build`, `plan.legacy_coverage` warning. No source spot-checks.
+Read `book-plan.json` and `validate-report.json` only; open a draft only to confirm a lead. Check: prerequisites before dependents in chapter and section order; concepts taught twice in different chapters (unmerged duplicates); judge every `terms.inconsistent`, `plan.order`, `plan.replaced_unreviewed` (read the unit: does it still belong in the section it sits in? if not: `coverage`, `major`), `plan.chapter_drift` (the book's chapter numbers differ from the source folders: `consistency`, `major`), `sources.unnumbered` (does the content of those files sit in the right chapter?), `sources.unsupported`, `ui.contrast`, `toc.*`, `config.*`, `book.legacy_build`, `plan.legacy_coverage` warning. No source spot-checks.
 
 ### `recheck` — verify ONLY the listed finding ids of `.book-state/audits/audit-<n>.json` against the current drafts → `.book-state/audits/audit-<n>.part-recheck.json`
 

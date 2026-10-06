@@ -1,5 +1,44 @@
 # Changelog
 
+## v11.6.0 (2026-10-06) — audit fixes: a chapter number never inherits a draft, and numbers are reading order
+
+Result of an audit of v11.5.0 against requirement v2-2 (findings F1–F4 and F6; F5 — a jump to an anchor counts the sections above it as read — is a design decision and was left as it is). Requirements 5 (later changes) and 8 (accuracy) did not pass: three defects sat on one path — removing, moving or renumbering chapters after the book exists — which the tests covered only in its straightforward cases. Plus a change of the agents' models.
+
+### What was wrong, and what enforces it now
+- **F1 (high) — a chapter number that was used again got its predecessor's draft.** When a chapter left the plan its draft stayed in the store. A new chapter with the same number (and, naturally, sections `4.1`, `4.2` again) found that file; a draft nothing was recorded for was taken as written from the current inputs, so the plan step listed nothing to write, validation passed with 0 problems and 0 warnings, and the page showed the new chapter's title over the old chapter's text — on `/book-kit:update-book` without any audit, because nothing was written. Now: (a) `sync_state.py --plan` moves the drafts of chapters that are no longer in a plan that passed its checks out of every level's store, to `.book-state/drafts/removed/L<level>/` (`drafts_retired`; kept, never read by the kit); (b) once a level has a ledger (`inputs.json`), a draft with neither an entry nor a briefing is never current: the plan step and the scan list the chapter in mode `full` (the reason is in the slice), the build reports it and validation blocks with `draft.stale` until it has been written. Drafts from before the ledger (no `inputs.json` yet) are adopted as before.
+- **F2 (medium) — a renumbering changed numbers but not places.** Swapping the source folders of chapters 3 and 4 left the plan as `[1, 2, 4, 3]`: the table of contents read 1, 2, 4, 3 and validation passed without a warning (`plan.order` looked at sections only). A section the architect asked to have between two others (`renumber_request: ["3.4=3.2", "3.2=3.3", "3.3=3.4"]`, exactly as its rules say) got the number 3.2 and stayed last in the chapter — with a warning that told the architect to request the renumbering it had just requested. Now `renumber()` moves every renumbered chapter and section to the place its new number has; `sync_state.py --plan` keeps chapters in number order (`chapters_sorted` — chapter numbers follow the source folders, their order is never a judgment); `plan.order` also reports chapters out of order.
+- **F6 (medium) — deleting a middle chapter and shifting the later ones in one step left the book misnumbered for good.** With `ch2` deleted and `ch3`→`ch2`, `ch4`→`ch3`, `sync_state.py --sources` rightly skipped the renumbering (chapter 2 was still in the plan) and handed over to the architect — whose rules forbid renumbering chapters. After the architect removed chapter 2 nothing tried again: the book stayed 1, 3, 4, validation passed, and the extraction of `sources/ch2/…` said `chapter: "3"`. Now the mismatch is read from the files on every run (`kitlib.chapter_drift`: each extraction's `chapter` against the folder its source is in), so no interrupted run can lose it: as soon as the number is free `sync_state.py --plan` renumbers by itself (`renumbered_from_sources`); until then it warns `plan.chapter_drift` and says which chapter has to leave the plan. The validator puts the same warning before the cross-book auditor. The architect's rules now say: a chapter whose sources are all gone is taken out of the plan; chapters are never renumbered or reordered by an agent.
+- **F3 (low) — `--rewrite` planned the whole book again.** The slice said "from the same plan and extractions", the command ran the architect in full mode anyway — Opus tokens and a risk of new section ids for the two cases the READMEs recommend the flag for (switching KaTeX on, a new tone). `--rewrite` now keeps the plan; `--replan` is the flag that also plans again.
+- **F4 (low) — a source outside a numbered chapter folder was placed without a word.** `sources/misc/notes.md` got `chapter: null` and nobody was told. The scan lists such files (`unnumbered`), the commands name them, and the validator warns `sources.unnumbered` so the auditor checks where their content went.
+
+### Agents: models and effort
+Set in each agent's frontmatter (`model`, `effort`); `pipeline.models` still overrides the model per role.
+
+| Agent | v11.5 | v11.6 |
+|---|---|---|
+| source-analyst | sonnet | opus · high |
+| book-architect | opus | opus · xhigh |
+| chapter-writer | sonnet | opus · high |
+| book-builder | sonnet | sonnet · high |
+| book-auditor | opus | opus · xhigh |
+
+Extraction and writing are the two phases that read and write the most text, so this raises the token cost of a build noticeably. To go back for a role: `"pipeline": {"models": {"analyst": "sonnet", "writer": "sonnet"}}`.
+
+### Behaviour that changed — read this before updating
+- **`/book-kit:build-book --rewrite` no longer calls the architect.** Use `--replan` when the plan itself should be made again.
+- **Drafts of removed chapters move to `.book-state/drafts/removed/`** on the first update. Delete the folder when you do not need them.
+- **A draft the kit has no record of blocks validation** (`draft.stale`) and is listed for a full write. This cannot happen to a draft a writer wrote after a plan step.
+- **The plan's chapters are sorted by number** by the plan step; a section renumbered by `renumber_request` moves in the list.
+- **New warnings**: `plan.chapter_drift`, `sources.unnumbered`, `plan.order` for chapters. None blocks.
+
+### Migration from v11.5.0
+1. Install v11.6 the same way and run `/book-kit:update-book` in each project. No `/book-kit:init`, no schema change, no source is read again because of the update.
+2. If a project once had a chapter removed and a **new chapter added under the same number** before this version, check that chapter yourself — no script can tell afterwards which chapter a recorded draft was written for. If it shows the old chapter's text, delete `.book-state/drafts/L<level>/ch-<n>.html` and run `/book-kit:update-book`.
+3. A book whose chapter numbers no longer match the source folders is renumbered by the first update, or reported with what has to be done (`plan.chapter_drift`).
+
+### Tests
+324 → 349 script checks (`t_v116`, 25 checks: each reproduction case of F1, F2, F6, F4, the `--rewrite`/`--replan` wording and the agents' frontmatter), plus the 28 browser checks. Validated with `claude plugin validate --strict` and the approval hook exercised with typed commands on Claude Code 2.1.291.
+
 ## v11.5.0 (2026-10-06) — audit fixes: nothing a run leaves open goes unlisted, and a draft is content only
 
 Result of an audit of v11.4.0 against requirement v2-2 (findings F1–F7 and two smaller points). All nine requirements were met and no finding was rated high. What the audit found were places where work dropped out of sight when a run stopped, and things a script can see that were still left to an auditor's reading.
