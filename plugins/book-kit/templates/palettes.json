@@ -1,0 +1,35 @@
+{
+  "contract": "11",
+  "default": "notebook",
+  "slots": {
+    "c1": "primary — definitions, the cover, chapter tab 1",
+    "c2": "warnings (keep it warm), chapter tab 7",
+    "c3": "examples, chapter tab 2",
+    "c4": "formulas, chapter tab 4",
+    "c5": "chapter summaries, chapter tab 3",
+    "c6": "notes, chapter tab 5",
+    "c7": "recall questions, chapter tab 6"
+  },
+  "palettes": {
+    "notebook": {
+      "label": {"th": "สมุดจด", "en": "Notebook"},
+      "paper": "neutral", "chroma": 1.0,
+      "hues": {"c1": 255, "c2": 38, "c3": 152, "c4": 302, "c5": 85, "c6": 200, "c7": 355}
+    },
+    "vivid": {
+      "label": {"th": "สดใส", "en": "Vivid"},
+      "paper": "cool", "chroma": 1.35,
+      "hues": {"c1": 268, "c2": 30, "c3": 146, "c4": 318, "c5": 92, "c6": 208, "c7": 2}
+    },
+    "ocean": {
+      "label": {"th": "ทะเล", "en": "Ocean"},
+      "paper": "cool", "chroma": 0.95,
+      "hues": {"c1": 245, "c2": 42, "c3": 165, "c4": 285, "c5": 205, "c6": 185, "c7": 225}
+    },
+    "sunset": {
+      "label": {"th": "อาทิตย์ตก", "en": "Sunset"},
+      "paper": "warm", "chroma": 1.05,
+      "hues": {"c1": 12, "c2": 52, "c3": 135, "c4": 325, "c5": 82, "c6": 30, "c7": 300}
+    }
+  }
+}

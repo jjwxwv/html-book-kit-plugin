@@ -1,0 +1,17 @@
+{
+  "description": "book-kit approval gate: records that the USER typed a book-kit command. A typed /book-kit:apply-fixes is the only thing that puts an approval of audit fixes on record (read by sync_state.py --set-audit approved).",
+  "hooks": {
+    "UserPromptExpansion": [
+      {
+        "matcher": "(build-book|update-book|audit-book|apply-fixes)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/gate_hook.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/scripts/gate_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

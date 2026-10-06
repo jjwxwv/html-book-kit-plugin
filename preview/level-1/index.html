@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="th" data-chapter="index" data-level="1" data-palette="notebook">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="book-kit 11.5.0">
+<meta name="book-kit:template" content="11">
+<title>สถิติเบื้องต้นสำหรับการวิเคราะห์ข้อมูล</title>
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="stylesheet" href="assets/style.css">
+<script>
+/* before first paint: stored theme, palette and text size (no flash) */
+(function(){var d=document.documentElement,k="hbk:สถิติเบื้องต้นสำหรับการวิเคราะห์ข้อมูล:";d.classList.add("js");try{var g=function(n){var v=localStorage.getItem(k+n);return v===null?null:JSON.parse(v)};var m=g("theme");if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";d.setAttribute("data-theme",m);var p=g("palette");if(p&&["notebook", "vivid", "ocean", "sunset"].indexOf(p)>=0)d.setAttribute("data-palette",p);var f=g("fs");if(f===-1||f===1||f===2)d.setAttribute("data-fs",String(f));if(g("tocHidden")===true)d.classList.add("toc-hidden")}catch(e){d.setAttribute("data-theme","light")}})();
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">ข้ามไปที่เนื้อหา</a>
+<div id="progress" role="progressbar" aria-label="ความคืบหน้าการอ่านหน้านี้" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+<header class="topbar">
+  <button id="toc-open" class="icon-btn" type="button" aria-label="แสดงหรือซ่อนสารบัญ" aria-controls="toc" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="book-title" href="index.html">สถิติเบื้องต้นสำหรับการวิเคราะห์ข้อมูล</a>
+  <span class="level-badge">ฉบับทบทวน</span>
+  <button id="appearance-open" class="icon-btn" type="button" aria-label="การแสดงผล" aria-controls="appearance" aria-expanded="false">Aa</button>
+  <button id="theme-toggle" class="icon-btn" type="button" aria-label="สลับธีม"><svg class="i-auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor" stroke="none"/></svg><svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+</header>
+<div id="appearance" class="popover" role="dialog" aria-label="การแสดงผล" hidden><div class="pop-group"><p class="pop-label">ชุดสี</p><div class="swatches"><button class="swatch" type="button" data-palette="notebook" aria-pressed="false"><span class="dots" aria-hidden="true"><i style="background:#2974cd"></i><i style="background:#008542"></i><i style="background:#a06600"></i><i style="background:#c04f29"></i></span><span>สมุดจด</span></button><button class="swatch" type="button" data-palette="vivid" aria-pressed="false"><span class="dots" aria-hidden="true"><i style="background:#4467f0"></i><i style="background:#008629"></i><i style="background:#9d6800"></i><i style="background:#db2f1f"></i></span><span>สดใส</span></button><button class="swatch" type="button" data-palette="ocean" aria-pressed="false"><span class="dots" aria-hidden="true"><i style="background:#007ac1"></i><i style="background:#00835e"></i><i style="background:#00818c"></i><i style="background:#bc5326"></i></span><span>ทะเล</span></button><button class="swatch" type="button" data-palette="sunset" aria-pressed="false"><span class="dots" aria-hidden="true"><i style="background:#c74760"></i><i style="background:#428100"></i><i style="background:#a16500"></i><i style="background:#b85900"></i></span><span>อาทิตย์ตก</span></button></div></div><div class="pop-group"><p class="pop-label">ขนาดตัวอักษร</p><div class="seg-ctl"><button type="button" data-fs-step="-1" aria-label="ตัวอักษรเล็กลง">A−</button><button type="button" data-fs-step="0" aria-label="ขนาดปกติ">A</button><button type="button" data-fs-step="1" aria-label="ตัวอักษรใหญ่ขึ้น">A+</button></div></div><div class="pop-group"><button id="reset-progress" class="link-btn" type="button">ล้างสถานะการอ่าน</button></div></div>
+<div class="layout">
+<nav id="toc" aria-label="สารบัญ">
+<div class="toc-head"><p class="toc-title">สารบัญ</p><input id="toc-filter" type="search" placeholder="ค้นหาหัวข้อ" aria-label="ค้นหาหัวข้อ" autocomplete="off"></div>
+<ol class="toc-tree">
+<li class="toc-ch" data-id="1" data-tab="1"><div class="toc-row"><a class="toc-ch-link" href="ch-1.html#sec-1"><span class="toc-num">1</span><span class="toc-text">สถิติคืออะไร และใช้ทำอะไร</span></a><span class="toc-count" aria-hidden="true"></span></div>
+</li>
+<li class="toc-ch collapsed" data-id="2" data-tab="2"><div class="toc-row"><a class="toc-ch-link" href="ch-2.html"><span class="toc-num">2</span><span class="toc-text">การสรุปข้อมูลด้วยตัวเลข</span></a><span class="toc-count" aria-hidden="true"></span><button class="twisty" type="button" aria-expanded="false" aria-label="แสดงหัวข้อย่อย"></button></div>
+<ol><li data-id="2.1"><a href="ch-2.html#sec-2-1"><span class="toc-num">2.1</span><span class="toc-text">ค่ากลางของข้อมูล</span></a></li><li data-id="2.2"><a href="ch-2.html#sec-2-2"><span class="toc-num">2.2</span><span class="toc-text">การวัดการกระจาย</span></a><ol><li data-id="2.2.1"><a href="ch-2.html#sec-2-2-1"><span class="toc-num">2.2.1</span><span class="toc-text">พิสัยและควอร์ไทล์</span></a></li><li data-id="2.2.2"><a href="ch-2.html#sec-2-2-2"><span class="toc-num">2.2.2</span><span class="toc-text">ความแปรปรวนและส่วนเบี่ยงเบนมาตรฐาน</span></a><ol><li data-id="2.2.2.1"><a href="ch-2.html#sec-2-2-2-1"><span class="toc-num">2.2.2.1</span><span class="toc-text">ทำไมกลุ่มตัวอย่างจึงหารด้วย n − 1</span></a></li></ol></li></ol></li><li data-id="2.3"><a href="ch-2.html#sec-2-3"><span class="toc-num">2.3</span><span class="toc-text">เลือกใช้ค่าสถิติให้เหมาะกับข้อมูล</span></a></li></ol>
+</li>
+<li class="toc-ch collapsed" data-id="3" data-tab="3"><div class="toc-row"><a class="toc-ch-link" href="ch-3.html"><span class="toc-num">3</span><span class="toc-text">ความน่าจะเป็นเบื้องต้น</span></a><span class="toc-count" aria-hidden="true"></span><button class="twisty" type="button" aria-expanded="false" aria-label="แสดงหัวข้อย่อย"></button></div>
+<ol><li data-id="3.1"><a href="ch-3.html#sec-3-1"><span class="toc-num">3.1</span><span class="toc-text">การทดลองสุ่ม ปริภูมิตัวอย่าง และเหตุการณ์</span></a></li><li data-id="3.2"><a href="ch-3.html#sec-3-2"><span class="toc-num">3.2</span><span class="toc-text">กฎการบวกและกฎการคูณ</span></a></li><li data-id="3.3"><a href="ch-3.html#sec-3-3"><span class="toc-num">3.3</span><span class="toc-text">ความน่าจะเป็นแบบมีเงื่อนไขและทฤษฎีบทของเบส</span></a></li></ol>
+</li>
+<li class="toc-ch collapsed" data-id="4" data-tab="4"><div class="toc-row"><a class="toc-ch-link" href="ch-4.html"><span class="toc-num">4</span><span class="toc-text">การแจกแจงปกติ</span></a><span class="toc-count" aria-hidden="true"></span><button class="twisty" type="button" aria-expanded="false" aria-label="แสดงหัวข้อย่อย"></button></div>
+<ol><li data-id="4.1"><a href="ch-4.html#sec-4-1"><span class="toc-num">4.1</span><span class="toc-text">รูปร่างและพารามิเตอร์</span></a></li><li data-id="4.2"><a href="ch-4.html#sec-4-2"><span class="toc-num">4.2</span><span class="toc-text">ค่ามาตรฐานและกฎ 68–95–99.7</span></a></li></ol>
+</li>
+</ol>
+<p class="toc-empty" hidden>ไม่พบหัวข้อที่ค้นหา</p>
+<div class="book-progress"><span class="label"></span><div class="bar" aria-hidden="true"><span class="seg" data-id="1" data-tab="1" style="flex-grow:1"><i></i></span><span class="seg" data-id="2" data-tab="2" style="flex-grow:6"><i></i></span><span class="seg" data-id="3" data-tab="3" style="flex-grow:3"><i></i></span><span class="seg" data-id="4" data-tab="4" style="flex-grow:2"><i></i></span></div></div>
+</nav>
+<main id="main" class="content">
+  <article class="content-inner wide">
+    <header class="cover">
+      <p class="cover-kicker">ฉบับทบทวนก่อนสอบ</p>
+      <h1>สถิติเบื้องต้นสำหรับการวิเคราะห์ข้อมูล</h1>
+      <p class="subtitle">สรุปเนื้อหารายวิชา STAT 101</p>
+      <p class="author">เรียบเรียงจากเอกสารประกอบการสอน</p>
+      <div class="cover-actions">
+        <a class="btn primary" id="start-link" href="ch-1.html#sec-1">เริ่มอ่าน</a>
+        <a class="btn" id="resume-link" href="ch-1.html#sec-1" hidden></a>
+      </div>
+      <p class="cover-meta">4 บท 12 หัวข้อ</p>
+    </header>
+    <section class="agenda" aria-labelledby="agenda-title">
+      <h2 id="agenda-title">สารบัญเนื้อหา</h2>
+<ol class="agenda-list">
+<li class="agenda-ch" data-id="1" data-tab="1"><a class="agenda-tab" href="ch-1.html#sec-1" tabindex="-1" aria-hidden="true">1</a><div class="agenda-body"><h3><a href="ch-1.html#sec-1">สถิติคืออะไร และใช้ทำอะไร</a></h3><p class="agenda-meta"><span>1 หัวข้อ</span><span class="agenda-bar" aria-hidden="true"><i></i></span><span class="agenda-progress"></span></p>
+</div></li>
+<li class="agenda-ch" data-id="2" data-tab="2"><a class="agenda-tab" href="ch-2.html" tabindex="-1" aria-hidden="true">2</a><div class="agenda-body"><h3><a href="ch-2.html">การสรุปข้อมูลด้วยตัวเลข</a></h3><p class="agenda-meta"><span>6 หัวข้อ</span><span class="agenda-bar" aria-hidden="true"><i></i></span><span class="agenda-progress"></span></p>
+<ol class="agenda-secs"><li class="d2"><a href="ch-2.html#sec-2-1"><span class="toc-num">2.1</span><span class="toc-text">ค่ากลางของข้อมูล</span></a></li><li class="d2"><a href="ch-2.html#sec-2-2"><span class="toc-num">2.2</span><span class="toc-text">การวัดการกระจาย</span></a></li><li class="d3"><a href="ch-2.html#sec-2-2-1"><span class="toc-num">2.2.1</span><span class="toc-text">พิสัยและควอร์ไทล์</span></a></li><li class="d3"><a href="ch-2.html#sec-2-2-2"><span class="toc-num">2.2.2</span><span class="toc-text">ความแปรปรวนและส่วนเบี่ยงเบนมาตรฐาน</span></a></li><li class="d4"><a href="ch-2.html#sec-2-2-2-1"><span class="toc-num">2.2.2.1</span><span class="toc-text">ทำไมกลุ่มตัวอย่างจึงหารด้วย n − 1</span></a></li><li class="d2"><a href="ch-2.html#sec-2-3"><span class="toc-num">2.3</span><span class="toc-text">เลือกใช้ค่าสถิติให้เหมาะกับข้อมูล</span></a></li></ol>
+</div></li>
+<li class="agenda-ch" data-id="3" data-tab="3"><a class="agenda-tab" href="ch-3.html" tabindex="-1" aria-hidden="true">3</a><div class="agenda-body"><h3><a href="ch-3.html">ความน่าจะเป็นเบื้องต้น</a></h3><p class="agenda-meta"><span>3 หัวข้อ</span><span class="agenda-bar" aria-hidden="true"><i></i></span><span class="agenda-progress"></span></p>
+<ol class="agenda-secs"><li class="d2"><a href="ch-3.html#sec-3-1"><span class="toc-num">3.1</span><span class="toc-text">การทดลองสุ่ม ปริภูมิตัวอย่าง และเหตุการณ์</span></a></li><li class="d2"><a href="ch-3.html#sec-3-2"><span class="toc-num">3.2</span><span class="toc-text">กฎการบวกและกฎการคูณ</span></a></li><li class="d2"><a href="ch-3.html#sec-3-3"><span class="toc-num">3.3</span><span class="toc-text">ความน่าจะเป็นแบบมีเงื่อนไขและทฤษฎีบทของเบส</span></a></li></ol>
+</div></li>
+<li class="agenda-ch" data-id="4" data-tab="4"><a class="agenda-tab" href="ch-4.html" tabindex="-1" aria-hidden="true">4</a><div class="agenda-body"><h3><a href="ch-4.html">การแจกแจงปกติ</a></h3><p class="agenda-meta"><span>2 หัวข้อ</span><span class="agenda-bar" aria-hidden="true"><i></i></span><span class="agenda-progress"></span></p>
+<ol class="agenda-secs"><li class="d2"><a href="ch-4.html#sec-4-1"><span class="toc-num">4.1</span><span class="toc-text">รูปร่างและพารามิเตอร์</span></a></li><li class="d2"><a href="ch-4.html#sec-4-2"><span class="toc-num">4.2</span><span class="toc-text">ค่ามาตรฐานและกฎ 68–95–99.7</span></a></li></ol>
+</div></li>
+</ol>
+    </section>
+  </article>
+</main>
+</div>
+<div class="scrim" hidden></div>
+<script src="assets/book-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

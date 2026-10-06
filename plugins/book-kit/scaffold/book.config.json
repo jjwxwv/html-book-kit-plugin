@@ -6,20 +6,23 @@
     "language": "th"
   },
   "content": {
+    "level": 2,
     "audience": "ผู้เรียนที่ต้องการเข้าใจเนื้อหาจริง ไม่ใช่ท่องจำ",
-    "english_terms_on_first_use": true,
-    "supplement_policy": "only when a gap genuinely blocks understanding",
-    "figures": "inline SVG, only when necessary for understanding"
+    "style_notes": "",
+    "recall_questions": true
   },
   "ui": {
-    "accent": "#4f46e5",
-    "accent2": "#0891b2",
+    "palette": "notebook",
     "features": {
       "math_katex_cdn": false,
       "mermaid_cdn": false
     }
   },
+  "pipeline": {
+    "max_parallel_agents": 6
+  },
   "audit": {
-    "max_source_spot_checks": 10
+    "max_source_spot_checks": 10,
+    "max_fix_batches": 5
   }
 }
