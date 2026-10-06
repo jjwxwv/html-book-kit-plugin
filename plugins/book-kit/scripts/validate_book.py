@@ -22,7 +22,7 @@ Warnings (never block; the auditor judges each): extraction.error, extraction.st
   coverage.brevity_reason, coverage.priority_omitted, content.section_thin,
   content.key_missing, formula.where_missing, level.steps_missing, level.long_paragraph,
   level.recall_missing, chapter.summary_missing, supplement.misplaced, terms.inconsistent, plan.order,
-  ui.contrast, config.*, toc.parse_desync, book.legacy_build, plan.legacy_coverage.
+  plan.chapter_drift, sources.unnumbered, ui.contrast, config.*, toc.parse_desync, book.legacy_build, plan.legacy_coverage.
 
 Usage (project = current directory, or --root <dir>):
   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_book.py" [--templates <dir>]
@@ -284,6 +284,18 @@ def run(root, templates):
         ledger, c_problems, c_warnings, by_section = kitlib.derive_coverage(plan, ext_idx, stale, read_json(cov_path))
         problems += c_problems
         warnings += c_warnings
+        unnumbered = [rel for rel in sorted(sources) if not kitlib.source_chapter(rel)]
+        if unnumbered:
+            warn("sources.unnumbered",
+                 f"{len(unnumbered)} source file(s) sit outside a numbered chapter folder ({', '.join(unnumbered[:6])}"
+                 f"{', …' if len(unnumbered) > 6 else ''}) — the architect placed their content by judgment; "
+                 "auditor must judge whether it sits in the right chapter")
+        drift, drift_notes = kitlib.chapter_drift(plan, ext_idx, kitlib.source_shas(sources))
+        warnings += drift_notes
+        if drift:
+            warn("plan.chapter_drift",
+                 "the source folders say the book's chapters should be renumbered ("
+                 + ", ".join(f"{a} -> {b}" for a, b in sorted(drift.items())) + ") — sync_state.py --plan does it")
         for item in kitlib.replan_open(root, ext_idx, plan):
             if item.get("replaced"):                  # evidence for the cross-book auditor
                 warn("plan.replaced_unreviewed",
@@ -403,6 +415,9 @@ def run(root, templates):
                     fail("draft.stale", f"{rel}: a rewrite was requested (--rewrite) and this chapter has not been "
                                         "written again — run sync_state.py --plan and write the chapters it lists "
                                         "(chapter-writer, mode full)")
+                elif entry is None and kitlib.ledger_exists(root, level):
+                    fail("draft.stale", f"{rel}: {kitlib.UNRECORDED_REASON} — run sync_state.py --plan and write "
+                                        "the chapters it lists (chapter-writer, mode full)")
                 elif entry and entry.get("draft_sha") == di["sha"]:
                     diff = kitlib.inputs_diff(entry, chapters[cid], ext_idx, wcfg["lang"])
                     if diff and diff.get("language"):

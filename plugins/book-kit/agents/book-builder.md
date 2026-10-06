@@ -3,6 +3,7 @@ name: book-builder
 description: Owns the book's presentation — applies design requests (colour palette, custom palette, optional template override) through configuration and repairs template/UI validation failures. Pages are assembled by build_book.py, never by this agent. Never changes content; never reads sources.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
+effort: high
 omitClaudeMd: true
 ---
 

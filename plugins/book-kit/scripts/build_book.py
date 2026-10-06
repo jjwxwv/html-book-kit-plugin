@@ -411,6 +411,10 @@ def main():
             with open(spath, "w", encoding="utf-8") as f:
                 f.write(json.dumps(sl, ensure_ascii=False, indent=1) + "\n")
     for cid, diff in stale.items():
+        if diff.get("unrecorded"):
+            warnings.append({"code": "draft.stale",
+                             "detail": f"chapter {cid}: {kitlib.UNRECORDED_REASON} (chapter-writer, mode full)"})
+            continue
         warnings.append({"code": "draft.stale",
                          "detail": f"chapter {cid}: its draft is older than its inputs ({diff}) — "
                                    "chapter-writer, mode delta"})

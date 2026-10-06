@@ -98,6 +98,25 @@ def rewrite_draft(text, mapping):
     return text
 
 
+def _id_key(sid):
+    """Sort key of a dotted id: numeric, parents before children; anything else keeps its place last."""
+    sid = str(sid).strip()
+    return (0, [int(x) for x in sid.split(".")]) if re.fullmatch(r"\d+(?:\.\d+)*", sid) else (1, [])
+
+
+def sort_chapters(plan):
+    """Put the plan's chapters in the order of their numbers (stable). Chapter numbers follow the
+    source folders, so their order is never a judgment. True when something moved."""
+    chapters = plan.get("chapters")
+    if not isinstance(chapters, list):
+        return False
+    ordered = sorted(chapters, key=lambda ch: _id_key(ch.get("id", "")) if isinstance(ch, dict) else (1, []))
+    if [id(c) for c in ordered] == [id(c) for c in chapters]:
+        return False
+    plan["chapters"] = ordered
+    return True
+
+
 def renumber(root, mapping, out):
     """Apply {old id: new id} (chapters and/or sections) to the plan, every level's drafts and
     ledgers, and the extraction frontmatter. All-or-nothing: validates first, then writes."""
@@ -154,6 +173,14 @@ def renumber(root, mapping, out):
             for sp in s.get("supplements") or []:
                 if isinstance(sp, dict) and isinstance(sp.get("id"), str):
                     sp["id"] = re.sub(r"^S-(\d+(?:\.\d+)*)-", lambda mo: f"S-{m(mo.group(1))}-", sp["id"])
+    # numbers are reading order: whatever got a new number moves to the place that number has
+    # (a chapter the user renumbered, a section the architect asked to have between two others)
+    touched = {m(a).split(".")[0] for a in mapping}
+    if any("." not in a for a in mapping):
+        sort_chapters(plan)
+    for ch in plan["chapters"]:
+        if isinstance(ch, dict) and str(ch.get("id", "")).strip() in touched and isinstance(ch.get("sections"), list):
+            ch["sections"].sort(key=lambda s: _id_key(s.get("id", "")) if isinstance(s, dict) else (1, []))
     if isinstance(plan.get("removed"), list):
         plan["removed"] = [m(x) if isinstance(x, str) else x for x in plan["removed"]]
     history = plan.get("idHistory") if isinstance(plan.get("idHistory"), list) else []
@@ -256,7 +283,8 @@ def do_sources(root, out):
     if mapping:
         renumber(root, mapping, out)
     elif why_not:
-        out["renumber_skipped"] = why_not + " — the architect restructures the affected chapters instead"
+        out["renumber_skipped"] = (why_not + " — the architect restructures the affected chapters; when the "
+                                   "chapter in the way has left the plan, sync_state.py --plan renumbers by itself")
 
     # delete what belongs to sources that are gone
     all_shas = set(shas.values())
@@ -629,6 +657,22 @@ def do_plan(root, out, rewrite=False):
         write_json(kitlib.plan_path(root), plan_raw)
         if done:
             out["reviewed"] = done
+    # the user renumbered source chapters and the book could not follow at once (the number was
+    # still taken): follow as soon as it is free — found from the files, so no run can lose it
+    drift, drift_notes = kitlib.chapter_drift(kitlib.normalize_plan(plan_raw)[0], kitlib.extraction_index(root),
+                                              kitlib.source_shas(src0))
+    if drift:
+        # a draft left by a chapter that is gone must not be overwritten by the chapter taking its number
+        retired = kitlib.retire_drafts(root, kitlib.normalize_plan(plan_raw)[0])
+        if retired:
+            out["drafts_retired"] = retired
+        if not renumber(root, drift, out):
+            return
+        out["renumbered_from_sources"] = drift
+        plan_raw, _ = kitlib.load_plan(root)
+    if isinstance(plan_raw, dict) and sort_chapters(plan_raw):
+        write_json(kitlib.plan_path(root), plan_raw)
+        out["chapters_sorted"] = [str(ch.get("id", "")) for ch in plan_raw["chapters"] if isinstance(ch, dict)]
     req = kitlib.normalize_plan(plan_raw)[0]["renumber_request"]
     if req:
         pairs = {}
@@ -651,9 +695,15 @@ def do_plan(root, out, rewrite=False):
         plan, ext_idx, stale, read_json(coverage_path(root)))
     _replan_followup(root, plan, ext_idx, ledger, cov_problems, out)
     out["problems"] += shape + problems + cov_problems
-    out["warnings"] += warnings + cov_warnings
+    out["warnings"] += warnings + cov_warnings + drift_notes
     if not shape:
         write_json(coverage_path(root), ledger)
+    if not out["problems"]:
+        # a chapter that left the plan takes its drafts along (every level): a chapter that gets
+        # the same number later must start without a draft, never on its predecessor's text
+        retired = kitlib.retire_drafts(root, plan)
+        if retired:
+            out["drafts_retired"] = out.get("drafts_retired", []) + retired
     raw, _ = kitlib.load_config(root)
     cfg, _ = kitlib.effective_config(raw)
     level = cfg["content"]["level"]

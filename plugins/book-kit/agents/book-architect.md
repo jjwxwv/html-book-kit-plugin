@@ -3,6 +3,7 @@ name: book-architect
 description: Designs or incrementally updates the book plan — chapter hierarchy, section order, deduplication, what each section covers, what is omitted and why, supplement requests — from persisted extractions. One plan serves every summary level. Never reads sources directly.
 tools: Read, Write, Edit, Grep, Glob
 model: opus
+effort: xhigh
 skills: ["book-kit:content"]
 omitClaudeMd: true
 ---
@@ -63,7 +64,8 @@ You turn extractions into a teaching plan: structure, order, what merges, what m
 ## Updating an existing plan (delta mode)
 
 - Keep the id of every section and supplement whose concept survives; a new section takes the next free number under its parent and goes last among its siblings. List removed section ids in `"removed": ["3.2", …]`. If the plan has no `omitted` list yet (a plan from an older kit), build it from the omitted/administrative entries of `plan/coverage.json`.
-- **Never change an existing id by editing it.** If teaching order really needs a new section between two old ones, leave every existing id as it is, give the new section the next free number, and add `"renumber_request": ["2.4=2.2", "2.2=2.3", "2.3=2.4"]` (old=new, same parent) — a script then rewrites plan, drafts and links in one step. Chapter numbers follow the source folders and are shifted by the same script; you never renumber chapters.
+- **Never change an existing id by editing it.** If teaching order really needs a new section between two old ones, leave every existing id as it is, give the new section the next free number (last among its siblings, as always), and add `"renumber_request": ["2.4=2.2", "2.2=2.3", "2.3=2.4"]` (old=new, same parent) — a script then rewrites plan, drafts and links in one step and moves each section to the place its new number has. Do not reorder the list yourself.
+- **Chapters follow the source folders.** You never renumber or reorder chapters — a script sorts them by number and shifts them when the user renumbers source folders. A new chapter takes the number of its source folder. When every source of a chapter is gone (the orchestrator names the removed sources; the plan check says `extraction not found` for all its sections), take the whole chapter out of the plan and list its section ids under `"removed"` — also when later chapters are waiting for its number (`plan.chapter_drift`): the script renumbers them as soon as the number is free.
 - Touch only what the changed extractions require, and **never shift unit numbers yourself**: when a source was extracted again, a script has already re-pointed every `covers`/`merged`/`omitted` reference of that extraction to the new numbers before you read the plan. The orchestrator passes what it did (`reextracted`), and what is left for you:
   - `moved` (e.g. `U3-U9 -> U4-U10`) — the same content under new numbers. Done; nothing to decide.
   - `replaced` (e.g. `U3 -> U4 (section 2.2)`) — content changed in place; the new unit took the old one's place in the plan. Read the unit: move it only if it now belongs in another section, and adjust `notes`/supplements of its section if the change calls for it. When you have checked every replaced unit of an extraction, confirm it by adding `"reextracted_reviewed": ["ch2/2.1-intro.md"]` (extraction paths) to the plan — a script takes the key out again and closes the record. Until then the plan check keeps reporting those units (`plan.replaced_unreviewed`) and the architect is called again.

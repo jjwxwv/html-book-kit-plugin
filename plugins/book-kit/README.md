@@ -1,4 +1,4 @@
-# Claude HTML Book Kit v11.5 — plugin edition (`book-kit`)
+# Claude HTML Book Kit v11.6 — plugin edition (`book-kit`)
 
 A Claude Code plugin that turns lesson sources (`sources/`: PDF / PPTX / DOCX / Markdown) into an accurate, easy-to-picture **HTML summary book** (Thai by default) with a nested TOC and agenda, reading progress, light/dark themes and AA-checked colour palettes. Five subagents (`source-analyst`, `book-architect`, `chapter-writer`, `book-builder`, `book-auditor`) do the judgment work; scripts do everything mechanical and gate every phase; you only run commands.
 
@@ -11,6 +11,7 @@ A Claude Code plugin that turns lesson sources (`sources/`: PDF / PPTX / DOCX / 
 - **Summary levels** — `content.level`: `1` = exam-review summary, `2` = re-composed study summary. The level changes the density of the explanation, never the coverage. Each level has its own draft store and its own line of audit reports, so both editions can exist and switching back costs nothing.
 - **The draft fits the configuration.** A chapter written in another language than `book.language`, TeX or Mermaid in a draft while that feature is off, a level-1 chapter without the recall questions that are switched on — each is found by script and sent to the writer; a changed audience or style note rewrites nothing and is reported. A draft is content only: a script, style or navigation element blocks (`draft.foreign_markup`), and a colour written as a literal — which would not follow the theme — is reported (`draft.hard_colour`). A rewrite asked for with `--rewrite` is owed until every chapter was written again.
 - **The plan follows a re-extraction by script.** When a source is read again its units are numbered anew; `sync_state.py` re-points every reference in the plan itself (units that only moved, units replaced in place). What needs judgment — units that are new, sections that lost every unit — blocks the plan check until the architect has answered it, also after an interrupted run; a unit replaced in place stays on record (scan `replan`, warning `plan.replaced_unreviewed`) until the architect confirms its place.
+- **Chapter numbers follow the source folders, and a number never inherits a draft.** Chapters are kept in number order by script; a renumbering that could not happen at once (the number was still taken by a chapter whose sources are gone) happens by itself as soon as the number is free, and is reported until then (`plan.chapter_drift`). The drafts of a chapter that left the plan move to `.book-state/drafts/removed/`; a draft nothing is on record for is never taken as current (`draft.stale`, mode `full`). A section renumbered on the architect's request moves to the place its new number has.
 - **Report → ask → stop, with a gate that is checked.** Audits never fix anything. The approval is the user typing `/book-kit:apply-fixes` — the model cannot start that command, the plugin's hook records each typed command, and the script that starts a fix batch spends one record per batch and refuses without one (`audit.gate`); a report takes at most `audit.max_fix_batches` batches. A finding stays on the table until it is fixed or you decline it — a later audit carries it over unless its auditor reports it fixed, an audit of the other level's edition does not touch it, and an interrupted fix batch is resumed.
 
 These are guarantees about the *evidence chain*. Whether a sentence is right is judged by the auditor agents, not by a script — see "Known limits" in [README_TH.md](README_TH.md).
@@ -25,7 +26,7 @@ These are guarantees about the *evidence chain*. Whether a sentence is right is 
 
 Check with `claude plugin validate /path/to/book-kit` or `/plugin` → Installed. Requires Python 3 — nothing else.
 
-**Claude Code version.** Validated (`claude plugin validate --strict`), loaded with `--plugin-dir` and from `~/.claude/skills/`, and the approval hook exercised with typed commands, on Claude Code 2.1.290 (marketplace install last checked on 2.1.289). Use 2.1.271 or later so that `omitClaudeMd` takes effect (older versions still work, but every agent additionally loads the project's `CLAUDE.md`). The approval gate relies on the `UserPromptExpansion` hook event; where that event does not exist or hooks are disabled, the kit says that the gate is not enforced and carries on under the prompt rules alone.
+**Claude Code version.** Validated (`claude plugin validate --strict`), loaded with `--plugin-dir` and from `~/.claude/skills/`, and the approval hook exercised with typed commands, on Claude Code 2.1.290 (marketplace install last checked on 2.1.289); v11.6 was validated (`--strict`) and its approval hook exercised again on 2.1.291. The agents set `effort` in their frontmatter (read by Claude Code at least since 2.1.258; `xhigh` is an Opus level). Use 2.1.271 or later so that `omitClaudeMd` takes effect (older versions still work, but every agent additionally loads the project's `CLAUDE.md`). The approval gate relies on the `UserPromptExpansion` hook event; where that event does not exist or hooks are disabled, the kit says that the gate is not enforced and carries on under the prompt rules alone.
 
  `pip install pypdf` is an optional second PDF reader for files whose page count the kit cannot read itself (the scan says when).
 
@@ -37,6 +38,7 @@ mkdir my-course && cd my-course && claude
 # put sources in sources/ (numeric prefixes = chapter structure — see sources/README.md)
 # book.config.json: "content": { "level": 1 | 2 }, "ui": { "palette": "notebook" | "vivid" | "ocean" | "sunset" }
 /book-kit:build-book              # extract → plan → write → build → validate → audit → REPORT → ASK → STOP
+                                  #   --rewrite: write every chapter again from the same plan · --replan: also plan again
 /book-kit:apply-fixes             # typing it IS the approval: one remediation batch, recheck, stop (a plain "yes" starts nothing)
 /book-kit:update-book             # after source edits, renumbered chapters, a new content.level, config changes: only what changed
 /book-kit:audit-book [chapters]   # audit only, changes nothing
@@ -58,7 +60,7 @@ Open `book/index.html`. Every command can be run again after an interruption; fi
 | `ui.custom_palette` | — | `{label, base, paper: neutral|warm|cool, chroma: 0.5–1.6, hues: {primary|warn|example|formula|summary|note|recall or c1…c7: hue angle or hex}}` |
 | `ui.features.math_katex_cdn`, `mermaid_cdn` | `false` | load KaTeX / Mermaid from a CDN (reader must be online) |
 | `pipeline.max_parallel_agents` | `6` | upper bound for parallel subagents |
-| `pipeline.models` | — | optional model per role, e.g. `{"writer": "opus"}`; roles `analyst`, `architect`, `writer`, `auditor`, `builder`. Defaults: analyst/writer/builder `sonnet`, architect/auditor `opus` |
+| `pipeline.models` | — | optional model per role, e.g. `{"writer": "sonnet"}`; roles `analyst`, `architect`, `writer`, `auditor`, `builder`. Defaults (agent frontmatter, `model` + `effort`): analyst `opus`/high, architect `opus`/xhigh, writer `opus`/high, builder `sonnet`/high, auditor `opus`/xhigh. Effort is set in the agent definitions, not here; to spend fewer tokens set e.g. `{"analyst": "sonnet", "writer": "sonnet"}` |
 | `audit.max_source_spot_checks` | `10` | source locations one audit may open, shared out among the chapter auditors (each keeps at least 1) |
 | `audit.max_fix_batches` | `5` | fix batches one audit report may have; after that the script approves no further batch (run `/book-kit:audit-book` for a fresh report that carries what is still open) |
 | `audit.approval_gate` | `"auto"` | `auto`: a fix batch needs a typed `/book-kit:apply-fixes` on record (enforced once the plugin's hook has run in the project) · `off`: not checked by script — for machines where hooks cannot run |
