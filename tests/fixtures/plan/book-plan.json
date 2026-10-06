@@ -1,0 +1,42 @@
+{
+  "planVersion": 2,
+  "updated": "2026-10-05",
+  "bookTitle": "สถิติเบื้องต้นสำหรับการวิเคราะห์ข้อมูล",
+  "chapters": [
+    {
+      "id": "1", "title_th": "สถิติคืออะไร และใช้ทำอะไร", "page": "ch-1.html",
+      "sections": [
+        {"id": "1", "title_th": "สถิติคืออะไร และใช้ทำอะไร", "priority": "important", "covers": ["ext:ch1/1-intro.md#U1-U6"], "notes": "single-section chapter; vocabulary every later chapter depends on"}
+      ]
+    },
+    {
+      "id": "2", "title_th": "การสรุปข้อมูลด้วยตัวเลข", "page": "ch-2.html",
+      "sections": [
+        {"id": "2.1", "title_th": "ค่ากลางของข้อมูล", "priority": "critical", "covers": ["ext:ch2/2.1-central.md#U1-U5"], "notes": "the review deck repeats the mean definition (merged here)", "merged": ["ext:ch2/2.3-review.md#U1"]},
+        {"id": "2.2", "title_th": "การวัดการกระจาย", "priority": "important", "covers": ["ext:ch2/2.2-dispersion.md#U1-U2"]},
+        {"id": "2.2.1", "title_th": "พิสัยและควอร์ไทล์", "priority": "critical", "covers": ["ext:ch2/2.2-dispersion.md#U3-U6"]},
+        {"id": "2.2.2", "title_th": "ความแปรปรวนและส่วนเบี่ยงเบนมาตรฐาน", "priority": "critical", "covers": ["ext:ch2/2.2-dispersion.md#U7-U9"]},
+        {"id": "2.2.2.1", "title_th": "ทำไมกลุ่มตัวอย่างจึงหารด้วย n − 1", "priority": "supporting", "covers": ["ext:ch2/2.2-dispersion.md#U10"], "supplements": [{"id": "S-2.2.2.1-a", "type": "explanation", "reason": "source states 'divide by n-1 for samples' with no reason; learners cannot reconstruct why"}]},
+        {"id": "2.3", "title_th": "เลือกใช้ค่าสถิติให้เหมาะกับข้อมูล", "priority": "important", "covers": ["ext:ch2/2.3-review.md#U2-U4"]}
+      ]
+    },
+    {
+      "id": "3", "title_th": "ความน่าจะเป็นเบื้องต้น", "page": "ch-3.html",
+      "sections": [
+        {"id": "3.1", "title_th": "การทดลองสุ่ม ปริภูมิตัวอย่าง และเหตุการณ์", "priority": "critical", "covers": ["ext:ch3/3-probability.md#U1-U4"]},
+        {"id": "3.2", "title_th": "กฎการบวกและกฎการคูณ", "priority": "critical", "covers": ["ext:ch3/3-probability.md#U5-U8"]},
+        {"id": "3.3", "title_th": "ความน่าจะเป็นแบบมีเงื่อนไขและทฤษฎีบทของเบส", "priority": "critical", "covers": ["ext:ch3/3-probability.md#U9-U12"], "supplements": [{"id": "S-3.3-a", "type": "figure", "reason": "the base-rate effect is counter-intuitive as percentages; a natural-frequency picture makes it visible"}]}
+      ]
+    },
+    {
+      "id": "4", "title_th": "การแจกแจงปกติ", "page": "ch-4.html",
+      "sections": [
+        {"id": "4.1", "title_th": "รูปร่างและพารามิเตอร์", "priority": "critical", "covers": ["ext:ch4/4-normal.md#U1-U3"]},
+        {"id": "4.2", "title_th": "ค่ามาตรฐานและกฎ 68–95–99.7", "priority": "critical", "covers": ["ext:ch4/4-normal.md#U4-U7"]}
+      ]
+    }
+  ],
+  "omitted": [],
+  "order_rationale": "source order kept; the review deck (2.3) is split: its duplicate mean definition merges into 2.1, the selection table closes the chapter",
+  "gaps_for_analyst": []
+}

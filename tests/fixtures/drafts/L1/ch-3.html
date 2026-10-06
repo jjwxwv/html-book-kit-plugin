@@ -1,0 +1,120 @@
+<!-- book-kit:draft chapter="3" level="1" -->
+<p class="lead">นิยามพื้นฐานของความน่าจะเป็น กฎการบวก กฎการคูณ และทฤษฎีบทของเบสสำหรับกลับทิศเงื่อนไข</p>
+
+<h2 id="sec-3-1">3.1 การทดลองสุ่ม ปริภูมิตัวอย่าง และเหตุการณ์</h2>
+<dl class="terms">
+<dt>การทดลองสุ่ม (random experiment)</dt>
+<dd>รู้ผลลัพธ์ที่เป็นไปได้ทั้งหมด แต่บอกล่วงหน้าไม่ได้ว่าจะออกผลใด</dd>
+<dt>ปริภูมิตัวอย่าง (sample space) <em>S</em></dt>
+<dd>เซตของผลลัพธ์ที่เป็นไปได้ทั้งหมด</dd>
+<dt>เหตุการณ์ (event)</dt>
+<dd>เซตย่อยของ <em>S</em> ที่สนใจ</dd>
+<dt>ส่วนเติมเต็ม (complement) <em>E</em>′</dt>
+<dd>เหตุการณ์ที่ <em>E</em> ไม่เกิด</dd>
+</dl>
+
+<div class="callout formula">
+<p>ผลลัพธ์มีโอกาสเท่ากัน: <em>P</em>(<em>E</em>) = <em>n</em>(<em>E</em>) / <em>n</em>(<em>S</em>)</p>
+<p>สมบัติ: 0 ≤ <em>P</em>(<em>E</em>) ≤ 1, <em>P</em>(<em>S</em>) = 1, <em>P</em>(<em>E</em>′) = 1 − <em>P</em>(<em>E</em>)</p>
+<p class="where"><em>n</em>(<em>E</em>), <em>n</em>(<em>S</em>) = จำนวนผลลัพธ์ใน <em>E</em> และในปริภูมิตัวอย่าง</p>
+</div>
+
+<div class="callout example">
+<p>ทอยลูกเต๋า 1 ลูก: <em>S</em> = {1, …, 6}, เลขคู่ = {2, 4, 6} → <em>P</em> = 3 / 6 = 0.5</p>
+</div>
+
+<h2 id="sec-3-2">3.2 กฎการบวกและกฎการคูณ</h2>
+<div class="callout formula">
+<p>กฎการบวก (หรือ): <em>P</em>(<em>A</em> ∪ <em>B</em>) = <em>P</em>(<em>A</em>) + <em>P</em>(<em>B</em>) − <em>P</em>(<em>A</em> ∩ <em>B</em>) ลบส่วนที่นับซ้ำ</p>
+<p>กฎการคูณ (และ): <em>P</em>(<em>A</em> ∩ <em>B</em>) = <em>P</em>(<em>A</em>) × <em>P</em>(<em>B</em> | <em>A</em>)</p>
+<p class="where">∪ = หรือ, ∩ = และ, <em>P</em>(<em>B</em> | <em>A</em>) = โอกาสของ <em>B</em> เมื่อรู้ว่า <em>A</em> เกิด</p>
+</div>
+
+<table>
+<thead><tr><th></th><th>ไม่เกิดร่วมกัน (mutually exclusive)</th><th>อิสระต่อกัน (independent)</th></tr></thead>
+<tbody>
+<tr><th>ความหมาย</th><td>เกิดพร้อมกันไม่ได้</td><td>เหตุการณ์หนึ่งไม่เปลี่ยนโอกาสของอีกเหตุการณ์</td></tr>
+<tr><th>เงื่อนไข</th><td><em>P</em>(<em>A</em> ∩ <em>B</em>) = 0</td><td><em>P</em>(<em>B</em> | <em>A</em>) = <em>P</em>(<em>B</em>)</td></tr>
+<tr><th>สูตรที่สั้นลง</th><td><em>P</em>(<em>A</em> ∪ <em>B</em>) = <em>P</em>(<em>A</em>) + <em>P</em>(<em>B</em>)</td><td><em>P</em>(<em>A</em> ∩ <em>B</em>) = <em>P</em>(<em>A</em>) × <em>P</em>(<em>B</em>)</td></tr>
+<tr><th>ตัวอย่าง</th><td>ทอยครั้งเดียว ได้ 1 กับได้ 6</td><td>ทอยสองครั้ง ผลครั้งแรกกับครั้งที่สอง</td></tr>
+</tbody>
+</table>
+
+<div class="callout example">
+<p>ไพ่ 52 ใบ โพแดงหรือคิง: 13/52 + 4/52 − 1/52 = 16/52 = 4/13 (ลบคิงโพแดงที่นับซ้ำ)</p>
+</div>
+
+<div class="callout warn">
+<p>ไม่เกิดร่วมกัน ≠ อิสระต่อกัน: ถ้าไม่เกิดร่วมกันและโอกาสของแต่ละเหตุการณ์มากกว่าศูนย์ รู้ว่า <em>A</em> เกิดก็รู้ทันทีว่า <em>B</em> ไม่เกิด จึงขึ้นต่อกัน</p>
+</div>
+
+<h2 id="sec-3-3">3.3 ความน่าจะเป็นแบบมีเงื่อนไขและทฤษฎีบทของเบส</h2>
+<div class="callout formula">
+<p><strong>ความน่าจะเป็นแบบมีเงื่อนไข</strong> (conditional probability): <em>P</em>(<em>A</em> | <em>B</em>) = <em>P</em>(<em>A</em> ∩ <em>B</em>) / <em>P</em>(<em>B</em>) เมื่อ <em>P</em>(<em>B</em>) &gt; 0</p>
+<p><strong>ทฤษฎีบทของเบส</strong> (Bayes' theorem): <em>P</em>(<em>A</em> | <em>B</em>) = <em>P</em>(<em>B</em> | <em>A</em>) × <em>P</em>(<em>A</em>) / <em>P</em>(<em>B</em>)</p>
+<p><em>P</em>(<em>B</em>) = <em>P</em>(<em>B</em> | <em>A</em>) × <em>P</em>(<em>A</em>) + <em>P</em>(<em>B</em> | <em>A</em>′) × <em>P</em>(<em>A</em>′)</p>
+<p class="where">เงื่อนไข <em>P</em>(<em>B</em>) &gt; 0 · <em>A</em>′ = <em>A</em> ไม่เกิด</p>
+</div>
+
+<div class="callout example">
+<p>ความชุก 1%, ผลบวกในผู้ป่วย 99%, ผลบวกผิดพลาด 5%: <em>P</em>(+) = 0.99 × 0.01 + 0.05 × 0.99 = 0.0594 → <em>P</em>(<em>D</em> | +) = 0.0099 / 0.0594 ≈ 16.7%</p>
+</div>
+
+<figure id="fig-3-3-a" data-supplement="S-3.3-a">
+<svg viewBox="0 0 640 300" role="img" aria-label="แผนภาพความถี่ธรรมชาติ จากผู้เข้าตรวจ 10,000 คน มีผู้ป่วย 100 คน ตรวจพบ 99 คน และผู้ไม่ป่วย 9,900 คน ตรวจพบผิดพลาด 495 คน รวมผลบวก 594 คน เป็นผู้ป่วยจริง 99 คน">
+  <rect x="220" y="14" width="200" height="50" rx="8" fill="var(--bg2)" stroke="var(--line)"/>
+  <text x="320" y="36" text-anchor="middle" font-weight="700">ผู้เข้าตรวจ 10,000 คน</text>
+  <text x="320" y="54" text-anchor="middle" font-size="12" fill="var(--muted)">ความชุกของโรค 1%</text>
+  <g stroke="var(--muted)" stroke-width="1.5" fill="none">
+    <path d="M280,64 L150,112"/><path d="M360,64 L490,112"/>
+    <path d="M110,162 L80,206"/><path d="M190,162 L230,206"/>
+    <path d="M450,162 L410,206"/><path d="M530,162 L560,206"/>
+  </g>
+  <rect x="60" y="112" width="180" height="50" rx="8" fill="var(--fig-2-soft)" stroke="var(--fig-2)"/>
+  <text x="150" y="134" text-anchor="middle" font-weight="700">ป่วยจริง 100 คน</text>
+  <text x="150" y="152" text-anchor="middle" font-size="12" fill="var(--muted)">1% ของ 10,000</text>
+  <rect x="400" y="112" width="180" height="50" rx="8" fill="var(--fig-3-soft)" stroke="var(--fig-3)"/>
+  <text x="490" y="134" text-anchor="middle" font-weight="700">ไม่ป่วย 9,900 คน</text>
+  <text x="490" y="152" text-anchor="middle" font-size="12" fill="var(--muted)">99% ของ 10,000</text>
+  <rect x="20" y="206" width="120" height="50" rx="8" fill="var(--fig-2-soft)" stroke="var(--fig-2)" stroke-width="2.5"/>
+  <text x="80" y="228" text-anchor="middle" font-weight="700">ผลบวก 99</text>
+  <text x="80" y="246" text-anchor="middle" font-size="12" fill="var(--muted)">99% ของ 100</text>
+  <rect x="170" y="206" width="120" height="50" rx="8" fill="var(--bg2)" stroke="var(--line)"/>
+  <text x="230" y="228" text-anchor="middle">ผลลบ 1</text>
+  <text x="230" y="246" text-anchor="middle" font-size="12" fill="var(--muted)">ตรวจไม่พบ</text>
+  <rect x="350" y="206" width="120" height="50" rx="8" fill="var(--fig-3-soft)" stroke="var(--fig-3)" stroke-width="2.5"/>
+  <text x="410" y="228" text-anchor="middle" font-weight="700">ผลบวก 495</text>
+  <text x="410" y="246" text-anchor="middle" font-size="12" fill="var(--muted)">5% ของ 9,900</text>
+  <rect x="500" y="206" width="120" height="50" rx="8" fill="var(--bg2)" stroke="var(--line)"/>
+  <text x="560" y="228" text-anchor="middle">ผลลบ 9,405</text>
+  <text x="560" y="246" text-anchor="middle" font-size="12" fill="var(--muted)">ถูกต้อง</text>
+  <text x="320" y="288" text-anchor="middle" font-weight="700">ผลบวกทั้งหมด 99 + 495 = 594 คน เป็นผู้ป่วยจริง 99 คน ≈ 16.7%</text>
+</svg>
+<figcaption>คิดเป็นจำนวนคนแทนร้อยละ จะเห็นว่าผลบวกส่วนใหญ่มาจากกลุ่มไม่ป่วยซึ่งมีจำนวนมากกว่ามาก</figcaption>
+</figure>
+
+<div class="callout warn">
+<p><em>P</em>(<em>A</em> | <em>B</em>) ≠ <em>P</em>(<em>B</em> | <em>A</em>): ผลบวกในผู้ป่วย 99% ไม่ได้แปลว่าผู้ได้ผลบวกป่วย 99% ต้องคิดความน่าจะเป็นตั้งต้น <em>P</em>(<em>A</em>) ด้วยเสมอ</p>
+</div>
+
+<pre><code>prior, sens, false_pos = 0.01, 0.99, 0.05
+p_pos = sens * prior + false_pos * (1 - prior)
+print(round(sens * prior / p_pos, 3))   # 0.167</code></pre>
+
+<div class="callout summary">
+<ul>
+<li>หรือ: บวกแล้วลบส่วนที่นับซ้ำ, และ: คูณด้วยความน่าจะเป็นแบบมีเงื่อนไข</li>
+<li>ไม่เกิดร่วมกันกับอิสระต่อกันเป็นคนละแนวคิด</li>
+<li>เบสกลับทิศเงื่อนไข และต้องใช้ <em>P</em>(<em>A</em>) ตั้งต้นเสมอ</li>
+</ul>
+</div>
+
+<div class="callout recall">
+<ul>
+<li>สมบัติพื้นฐานสามข้อของความน่าจะเป็นคืออะไร <a href="#sec-3-1">3.1</a></li>
+<li>เหตุใดกฎการบวกต้องลบ <em>P</em>(<em>A</em> ∩ <em>B</em>) <a href="#sec-3-2">3.2</a></li>
+<li>ไม่เกิดร่วมกันกับอิสระต่อกันต่างกันอย่างไร สูตรใดสั้นลงในแต่ละกรณี <a href="#sec-3-2">3.2</a></li>
+<li>เขียนทฤษฎีบทของเบสและสูตรของ <em>P</em>(<em>B</em>) <a href="#sec-3-3">3.3</a></li>
+<li>ชุดตรวจแม่นยำ 99% แต่ผลบวกมีโอกาสป่วยจริงเพียง 16.7% เพราะอะไร <a href="#sec-3-3">3.3</a></li>
+</ul>
+</div>
